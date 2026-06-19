@@ -1080,7 +1080,10 @@ function renderDiamond(){
      <div class="field"><label>日期</label><input id="f-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
      <div class="field"><label>页码 / 章节</label><input id="f-pages" placeholder="例如 第 45–67 页 或 第 3 章"></div>
      <div class="auto">第 25 周 · 2026 · 第 1 / 5 天（自动）</div>
-     <div class="field"><label>书名</label><input id="f-book" placeholder="你正在读什么？"></div>
+     <div class="field"><label>选择书籍</label><select id="f-book">
+       <option value="">请选择正在阅读的书籍</option>
+       ${BOOKS.slice().sort((a,b)=>a[0].localeCompare(b[0])).map(b=>`<option value="${esc(b[0])}">${esc(b[0])}${b[1]?` · ${esc(b[1])}`:''}</option>`).join('')}
+     </select></div>
      <div class="field"><label>你的 Diamond</label><textarea id="f-text" placeholder="分享你今天阅读中的关键感悟、金句或突破……"></textarea></div>
      <button class="btn btn-blue" style="width:100%;justify-content:center" id="f-submit">💎 提交 DIAMOND</button>
    </div>
@@ -1105,6 +1108,16 @@ function closeBook(){
   $('#book-modal').hidden=true;
   document.body.style.overflow='';
 }
+function shareBookDiamond(index){
+  const book=BOOKS[index];
+  if(!book)return;
+  closeBook();
+  switchView('diamond');
+  const bookSelect=$('#f-book');
+  if(bookSelect)bookSelect.value=book[0];
+  const text=$('#f-text');
+  if(text)text.focus();
+}
 function showBook(index){
   const book=BOOKS[index];
   if(!book)return;
@@ -1124,7 +1137,8 @@ function showBook(index){
   $('#book-modal-content').innerHTML=`
     <h2 class="view-h" id="book-modal-title" style="font-size:24px;padding-right:42px">${esc(book[0])}</h2>
     <div class="book-author">${esc(book[1])}</div>
-    <div class="sec-h">正在阅读 / 已分享成员</div>
+    <button class="btn btn-blue" style="width:100%;justify-content:center;margin:16px 0" onclick="shareBookDiamond(${index})">💎 分享这本书的 Diamond</button>
+    <div class="sec-h">正在阅读 / 已分享 Diamond 的成员</div>
     ${readerHTML||'<div class="no-readers">暂无阅读记录</div>'}`;
   $('#book-modal').hidden=false;
   document.body.style.overflow='hidden';
