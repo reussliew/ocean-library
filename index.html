@@ -225,8 +225,6 @@
   .hot .cv{width:40px;height:54px;border-radius:7px;flex:0 0 auto;box-shadow:0 6px 14px -6px #000;display:flex;align-items:flex-end;justify-content:center;font-size:18px;padding-bottom:3px}
   .hot .t{font-weight:700;font-size:14px;line-height:1.25}
   .hot .a{font-size:11px;color:var(--muted)}
-  .hot .heat{margin-left:auto;text-align:right;font-weight:800;font-size:13px;color:#FF9A57}
-  .hot .heat small{display:block;font-size:9px;color:var(--muted);font-weight:600}
 
   /* ---------- new members ---------- */
   .nm-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
@@ -837,11 +835,11 @@ const BOOKLISTS=[
 const CATS=['cat1','cat2','cat3','cat4','cat5'];
 
 const HOT=[
-  {t:'海底两万里',a:'儒勒·凡尔纳',heat:98.5,ic:'🐙',cv:'linear-gradient(160deg,#1f6fd0,#0c2c66)'},
-  {t:'为什么海洋是蓝色的？',a:'海洋科学小组',heat:94.2,ic:'💧',cv:'linear-gradient(160deg,#19c0d8,#0c4a66)'},
-  {t:'地球的蓝色心脏',a:'西尔维娅·厄尔',heat:91.7,ic:'💙',cv:'linear-gradient(160deg,#6e5cf5,#241a66)'},
-  {t:'鲸落',a:'周晓枫',heat:88.4,ic:'🐋',cv:'linear-gradient(160deg,#2e7bf0,#0c1c50)'},
-  {t:'寂静的春天',a:'蕾切尔·卡森',heat:85.1,ic:'🌿',cv:'linear-gradient(160deg,#34d6a6,#0c4a3a)'},
+  {t:'三体全集（全三册）',a:'刘慈欣',ic:'🚀',cv:'linear-gradient(160deg,#6e5cf5,#241a66)'},
+  {t:'长安的荔枝（同名影视原著）',a:'马伯庸',ic:'📕',cv:'linear-gradient(160deg,#f2a44e,#7c3a16)'},
+  {t:'明朝那些事儿（全集）',a:'当年明月',ic:'📜',cv:'linear-gradient(160deg,#2e7bf0,#0c1c50)'},
+  {t:'活着',a:'余华',ic:'🌾',cv:'linear-gradient(160deg,#34d6a6,#0c4a3a)'},
+  {t:'平凡的世界（全三册）',a:'路遥',ic:'🌍',cv:'linear-gradient(160deg,#19c0d8,#0c4a66)'},
 ];
 
 let BOOKS=[
@@ -1048,18 +1046,17 @@ function renderDashboard(){
         <div class="qt">${esc(d.qt.slice(0,110))}${d.qt.length>110?'…':''}</div></div></div>`).join('')}
     </div>
     <div class="glass" style="padding:20px">
-      <div class="sec-h">📑 最多老师阅读 <span class="all" onclick="switchView('books')">查看书库 ›</span></div>
+      <div class="sec-h">📑 推荐书单 <span class="all" onclick="switchView('books')">最多老师阅读 ›</span></div>
       ${recommendedBooks.map((b,i)=>{const bookIndex=BOOKS.findIndex(book=>book[0]===b.title);return `<div class="bl-row" style="cursor:pointer" onclick="showBook(${bookIndex})">
         <span class="bl-thumb" style="background:${['#2EA0F0','#8A7BFF','#19C0D8','#F2A44E'][i]}26;color:${['#2EA0F0','#8A7BFF','#19C0D8','#F2A44E'][i]}">${i+1}</span>
         <div><div class="t">${esc(b.title)}</div><div class="c">${b.readers.size} 位老师 · ${b.diamonds} 篇 Diamond</div></div></div>`;}).join('')||'<div class="sub-h">暂无阅读记录</div>'}
     </div>
     <div class="glass" style="padding:20px">
-      <div class="sec-h">🔥 热门书籍 <span class="all" onclick="switchView('books')">查看全部 ›</span></div>
+      <div class="sec-h">🔥 热门书籍 <a class="all" href="https://weread.qq.com/web/category/all" target="_blank" rel="noopener noreferrer">查看微信读书总榜 ↗</a></div>
       ${HOT.map((h,i)=>`<div class="hot">
         <span class="rk" style="background:${i<3?'var(--g-gold)':'rgba(96,158,255,.2)'};${i>=3?'color:#9DB6D8':''}">${i+1}</span>
         <span class="cv" style="background:${h.cv}">${h.ic}</span>
-        <div><div class="t">${h.t}</div><div class="a">${h.a}</div></div>
-        <div class="heat">${h.heat}<small>热度 🔥</small></div></div>`).join('')}
+        <div><div class="t">${h.t}</div><div class="a">${h.a}</div></div></div>`).join('')}
     </div>
   </div>
 
