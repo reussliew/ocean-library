@@ -576,9 +576,26 @@ MEMBERS.forEach((m,i)=>{m.img=AVPOOL[i%AVPOOL.length];m.pts=0;m.lv=0;});
 const me=MEMBERS.find(m=>m.name==='Wenly')||MEMBERS[0];
 let ACTIVE_MEMBERS=[];
 
-const POLL={q:'今天的阅读让你最大的收获是？',
-  opts:[{t:'学到了新知识',ic:'📘',col:'#2EA0F0'},{t:'启发了新思考',ic:'💡',col:'#F2C44E'},{t:'激发了新行动',ic:'🚀',col:'#8A7BFF'}],
-  counts:[186,145,82],voted:null};
+const POLL_QUESTIONS=[
+  {q:'今天的阅读让你最大的收获是？',opts:[['学到了新知识','📘','#2EA0F0'],['启发了新思考','💡','#F2C44E'],['激发了新行动','🚀','#8A7BFF']]},
+  {q:'今天最值得带进课堂的是？',opts:[['一个新方法','🧭','#2EA0F0'],['一个好问题','❓','#F2C44E'],['一个真实故事','💬','#8A7BFF']]},
+  {q:'阅读遇到困难时，你会怎么做？',opts:[['重新慢读','🔍','#2EA0F0'],['做笔记整理','✍️','#F2C44E'],['与伙伴讨论','🤝','#8A7BFF']]},
+  {q:'今天的内容改变了你什么？',opts:[['看问题的角度','👀','#2EA0F0'],['处理事情的方法','🛠️','#F2C44E'],['接下来的行动','🏃','#8A7BFF']]},
+  {q:'你最喜欢哪一种阅读体验？',opts:[['安静独自阅读','🌙','#2EA0F0'],['一起交流分享','🌊','#F2C44E'],['读后马上实践','🌱','#8A7BFF']]},
+  {q:'今天读完后最想做什么？',opts:[['继续深入阅读','📚','#2EA0F0'],['写下 Diamond','💎','#F2C44E'],['分享给一位伙伴','🎁','#8A7BFF']]},
+  {q:'一本好书最重要的价值是？',opts:[['带来知识','🧠','#2EA0F0'],['带来勇气','🔥','#F2C44E'],['带来改变','✨','#8A7BFF']]}
+];
+function malaysiaDateKey(){
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const get=type=>parts.find(p=>p.type===type).value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+function dailyPoll(){
+  const date=malaysiaDateKey(),day=Math.floor(Date.parse(`${date}T00:00:00Z`)/86400000);
+  const source=POLL_QUESTIONS[((day%POLL_QUESTIONS.length)+POLL_QUESTIONS.length)%POLL_QUESTIONS.length];
+  return {key:`daily-${date}`,date,q:source.q,opts:source.opts.map(([t,ic,col])=>({t,ic,col})),counts:[0,0,0],voted:null};
+}
+let POLL=dailyPoll();
 
 let DIAMONDS=[
   {who:'Jorryn',img:'av-c-whaleA',title:'躺平，是在浪费你的人生',time:'2026年5月31日',qt:`DIAMOND SHARING-CHERYL
@@ -942,18 +959,19 @@ function pollHTML(){
   const total=POLL.counts.reduce((a,b)=>a+b,0);const show=POLL.voted!=null;
   return `<div class="sec-h">🗳️ 每日反思投票</div>
    <div class="q">${POLL.q}</div>
-   ${POLL.opts.map((o,i)=>{const pct=Math.round(POLL.counts[i]/total*100);const sel=POLL.voted===i;
+   ${POLL.opts.map((o,i)=>{const pct=total?Math.round(POLL.counts[i]/total*100):0;const sel=POLL.voted===i;
      return `<button class="opt" data-i="${i}">
        <span class="bar" style="width:${show?pct+'%':'0'};background:linear-gradient(90deg,${o.col}55,${o.col}10)"></span>
        <span class="lbl"><span class="ic" style="background:${o.col}28;color:${o.col}">${o.ic}</span>
          <span>${sel?'✓ ':''}${o.t}</span>
          ${show?`<span class="pc">${pct}%</span><span class="vt">${POLL.counts[i]}票</span>`:'<span class="pc" style="margin-left:auto;color:var(--muted)">点击投票</span>'}</span>
      </button>`;}).join('')}
-   <div class="poll-foot"><span>投票人数：<b>${fmt(total)}</b></span><span>每日一问，反思成长 ✦</span></div>`;
+   <div class="poll-foot"><span>实际投票人数：<b>${fmt(total)}</b></span><span>${POLL.voted!=null?'今天已投票':'每位老师每天限投一次'} ✦</span></div>`;
 }
 function bindPoll(root){root.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
-  if(POLL.voted!=null)return;const i=+b.dataset.i;POLL.voted=i;POLL.counts[i]++;
-  root.innerHTML=pollHTML();bindPoll(root);});}
+  if(POLL.voted!=null)return;const i=+b.dataset.i;
+  if(window.submitDailyVote)window.submitDailyVote(i);
+});}
 
 /* =================== DASHBOARD =================== */
 function ring(pct){const r=26,c=2*Math.PI*r,off=c*(1-pct/100);
@@ -975,6 +993,7 @@ function weeklyDiamondCount(name){
 
 function renderDashboard(){
   const prog=MEMBERS.map(m=>({...m,weekly:weeklyDiamondCount(m.name)})).sort((a,b)=>b.weekly-a.weekly).slice(0,4);
+  const maxWeekly=Math.max(...prog.map(m=>m.weekly),1);
   const lb=[...MEMBERS].slice(0,5);
   const news=MEMBERS.filter(m=>m.isNew).slice(0,5);
   const weekStart=currentWeekStart();
@@ -1017,7 +1036,7 @@ function renderDashboard(){
     <div class="glass stat"><div class="lbl">Diamond 总数</div><div class="num">${fmt(DIAMONDS.length)}</div><div class="delta">每篇分享计 1 个</div><span class="em" style="width:78px;height:78px"><img src="${asset('pose4')}" style="width:100%;height:100%;object-fit:contain"></span></div>
     <div class="glass stat" title="${esc(activeNames.join('、'))}"><div class="lbl">活跃成员</div><div class="num">${activeNames.length}</div><div class="delta">${activeNames.length?esc(activeNames.slice(0,3).join('、'))+(activeNames.length>3?'…':''):'尚未有人登入'}</div><span class="em" style="width:80px;height:80px"><img src="${asset('pose1')}" style="width:100%;height:100%;object-fit:contain"></span></div>
     <div class="glass stat"><div class="lbl">馆藏书籍</div><div class="num">${fmt(BOOKS.length)}</div><div class="delta">目前书库收录</div><span class="em" style="width:80px;height:80px"><img src="${asset('pose2')}" style="width:100%;height:100%;object-fit:contain"></span></div>
-    <div class="glass stat"><div class="lbl">本周 Diamond</div><div class="num">${fmt(weeklyDiamonds.length)}</div><div class="delta" style="color:var(--gold)">每位老师每周最多 3 篇</div>${ring(Math.min(weeklyDiamonds.length/(Math.max(MEMBERS.length,1)*3)*100,100))}</div>
+    <div class="glass stat"><div class="lbl">本周 Diamond</div><div class="num">${fmt(weeklyDiamonds.length)}</div><div class="delta" style="color:var(--gold)">鼓励多阅读、多分享</div>${ring(Math.min(weeklyDiamonds.length*10,100))}</div>
   </div>
 
   <!-- POLL + READING PROGRESS -->
@@ -1028,9 +1047,9 @@ function renderDashboard(){
       ${prog.map((m,i)=>`<div class="prow">
         ${avatar(m,42)}
         <div class="info"><div class="nm">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}</div><div class="lv">Lv.${m.lv}</div></div>
-        <div class="cnt">本周分享 ${m.weekly}/3 篇</div>
-        <div class="pbar"><i style="width:${Math.min(m.weekly/3*100,100)}%"></i></div>
-        <div class="pct">${Math.round(Math.min(m.weekly/3*100,100))}%</div>
+        <div class="cnt">本周分享 ${m.weekly} 篇</div>
+        <div class="pbar"><i style="width:${m.weekly/maxWeekly*100}%"></i></div>
+        <div class="pct">${m.weekly} 篇</div>
         <div class="mdl">${i<3?medals[i]:''}</div>
       </div>`).join('')}
     </div>
@@ -1189,11 +1208,12 @@ function renderMembers(){
    <input class="search" id="mem-search" placeholder="搜索成员……">
    <div class="grid3" id="mem-grid"></div>`;
   const grid=$('#mem-grid');
+  const maxWeekly=Math.max(...MEMBERS.map(m=>weeklyDiamondCount(m.name)),1);
   const draw=list=>grid.innerHTML=list.map(m=>{const weekly=weeklyDiamondCount(m.name);return `<div class="glass mcard">
      <div class="top">${avatar(m,48)}<div><div class="nm">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}${m.isNew?'<span class="role" style="color:var(--teal);border-color:rgba(25,227,210,.4)">新</span>':''}</div><div class="lv">Lv.${m.lv}</div></div>
        <div class="pp">${fmt(m.pts)}<small>积分</small></div></div>
-     <div class="pbar" style="max-width:none"><i style="width:${Math.min(weekly/3*100,100)}%"></i></div>
-     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>本周 ${weekly}/3 篇</span><span>${m.books} 本书 · ${m.diamonds} 💎</span></div>
+     <div class="pbar" style="max-width:none"><i style="width:${weekly/maxWeekly*100}%"></i></div>
+     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>本周 ${weekly} 篇</span><span>${m.books} 本书 · ${m.diamonds} 💎</span></div>
    </div>`;}).join('')||`<div class="sub-h">没有符合条件的成员。</div>`;
   draw(MEMBERS);
   $('#mem-search').oninput=e=>{const q=e.target.value.toLowerCase();draw(MEMBERS.filter(m=>m.name.toLowerCase().includes(q)));};
@@ -1230,11 +1250,12 @@ function renderAll(){renderDashboard();renderDiamond();renderBooks();renderMembe
 async function loadFromSupabase(){
   if(!sb) return;
   try{
-    const [m,b,dia,activity]=await Promise.all([
+    const [m,b,dia,activity,votes]=await Promise.all([
       sb.from('members').select('*').order('points',{ascending:false}),
       sb.from('books').select('*'),
       sb.from('diamonds').select('*').order('created_at',{ascending:false}),
-      sb.from('teacher_activity').select('member_name,last_seen').order('last_seen',{ascending:false})
+      sb.from('teacher_activity').select('member_name,last_seen').order('last_seen',{ascending:false}),
+      sb.from('daily_votes').select('member_name,option_index').eq('vote_date',malaysiaDateKey())
     ]);
     if(m&&m.data&&m.data.length){
       MEMBERS=m.data.map(r=>({name:r.name,lv:r.level||0,pts:r.points||0,weekly:r.weekly||0,
@@ -1247,6 +1268,13 @@ async function loadFromSupabase(){
       DIAMONDS=dia.data.map(r=>({who:r.author_name,title:canonicalBookTitle(r.title),qt:r.body||'',time:fmtTime(r.created_at),createdAt:r.created_at,img:r.avatar||'m1.png'}));
     }
     if(activity&&activity.data)ACTIVE_MEMBERS=activity.data;
+    POLL=dailyPoll();
+    if(votes&&votes.data){
+      votes.data.forEach(v=>{if(v.option_index>=0&&v.option_index<POLL.counts.length)POLL.counts[v.option_index]++;});
+      const teacher=localStorage.getItem('ocean_teacher_name');
+      const own=votes.data.find(v=>v.member_name===teacher);
+      if(own)POLL.voted=own.option_index;
+    }
   }catch(e){console.warn('Supabase load failed — using built-in data.',e);}
 }
 $('#book-close').onclick=closeBook;
