@@ -982,6 +982,15 @@ function renderDashboard(){
   const weekStart=currentWeekStart();
   const weeklyDiamonds=DIAMONDS.filter(d=>d.createdAt&&new Date(d.createdAt)>=weekStart);
   const activeNames=ACTIVE_MEMBERS.map(a=>a.member_name||a).filter(Boolean);
+  const recommendationMap=new Map();
+  DIAMONDS.forEach(d=>{
+    const title=canonicalBookTitle(d.title);
+    if(!recommendationMap.has(title))recommendationMap.set(title,{title,readers:new Set(),diamonds:0});
+    const item=recommendationMap.get(title);
+    item.readers.add(d.who);
+    item.diamonds++;
+  });
+  const recommendedBooks=[...recommendationMap.values()].sort((a,b)=>b.readers.size-a.readers.size||b.diamonds-a.diamonds).slice(0,4);
   $('#view-dashboard').innerHTML=`
   <!-- HERO -->
   <div class="hero">
@@ -1039,9 +1048,10 @@ function renderDashboard(){
         <div class="qt">${esc(d.qt.slice(0,110))}${d.qt.length>110?'…':''}</div></div></div>`).join('')}
     </div>
     <div class="glass" style="padding:20px">
-      <div class="sec-h">📑 推荐书单 <span class="all" onclick="switchView('books')">更多书单 ›</span></div>
-      ${BOOKLISTS.map(b=>b.feat?`<div class="bl-feat"><div class="t">${b.t}</div><div class="d">${b.d}</div><div class="c">共 ${b.n} 本书</div><span class="em" style="width:90px;height:90px"><img src="${asset('pose5')}" style="width:100%;height:100%;object-fit:contain"></span></div>`
-        :`<div class="bl-row"><span class="bl-thumb" style="background:${b.col}26;color:${b.col}">${b.ic}</span><div><div class="t">${b.t}</div><div class="c">共 ${b.n} 本书</div></div></div>`).join('')}
+      <div class="sec-h">📑 最多老师阅读 <span class="all" onclick="switchView('books')">查看书库 ›</span></div>
+      ${recommendedBooks.map((b,i)=>{const bookIndex=BOOKS.findIndex(book=>book[0]===b.title);return `<div class="bl-row" style="cursor:pointer" onclick="showBook(${bookIndex})">
+        <span class="bl-thumb" style="background:${['#2EA0F0','#8A7BFF','#19C0D8','#F2A44E'][i]}26;color:${['#2EA0F0','#8A7BFF','#19C0D8','#F2A44E'][i]}">${i+1}</span>
+        <div><div class="t">${esc(b.title)}</div><div class="c">${b.readers.size} 位老师 · ${b.diamonds} 篇 Diamond</div></div></div>`;}).join('')||'<div class="sub-h">暂无阅读记录</div>'}
     </div>
     <div class="glass" style="padding:20px">
       <div class="sec-h">🔥 热门书籍 <span class="all" onclick="switchView('books')">查看全部 ›</span></div>
