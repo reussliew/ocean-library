@@ -56,9 +56,9 @@
   nav{position:sticky;top:0;z-index:40;background:rgba(6,15,32,.72);backdrop-filter:blur(16px);
     border-bottom:1px solid var(--line)}
   .navbar{display:flex;align-items:center;gap:18px;height:74px}
-  .navlinks{display:flex;gap:4px;margin-left:14px}
+  .navlinks{display:flex;flex-wrap:nowrap;gap:4px;margin-left:14px}
   .navlinks button{background:transparent;border:none;color:var(--sec);font:inherit;font-size:14px;font-weight:700;
-    padding:9px 16px;border-radius:12px;cursor:pointer;transition:.15s;position:relative}
+    padding:9px 16px;border-radius:12px;cursor:pointer;transition:.15s;position:relative;white-space:nowrap;word-break:keep-all}
   .navlinks button:hover{color:var(--text);background:rgba(96,158,255,.08)}
   .navlinks button.active{color:var(--text)}
   .navlinks button.active::after{content:"";position:absolute;left:16px;right:16px;bottom:1px;height:3px;border-radius:3px;background:var(--g-gold)}
@@ -66,10 +66,6 @@
   .navsearch{display:flex;align-items:center;gap:8px;background:rgba(8,20,44,.8);border:1px solid var(--line);
     border-radius:12px;padding:9px 14px;color:var(--muted);font-size:13px;min-width:210px}
   .navsearch input{background:transparent;border:none;outline:none;color:var(--text);font:inherit;font-size:13px;width:100%}
-  .bell{position:relative;font-size:18px;cursor:pointer;width:42px;height:42px;display:flex;align-items:center;justify-content:center;
-    border-radius:12px;background:rgba(8,20,44,.8);border:1px solid var(--line)}
-  .bell .dot{position:absolute;top:6px;right:7px;min-width:16px;height:16px;border-radius:9px;background:#FF5470;
-    color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg)}
   .profile{display:flex;align-items:center;gap:9px;background:rgba(8,20,44,.8);border:1px solid var(--line);
     border-radius:14px;padding:5px 12px 5px 5px;cursor:pointer}
   .profile .pa{width:38px;height:38px;border-radius:11px;overflow:hidden;flex:0 0 auto;background:var(--g-cool);display:flex;align-items:center;justify-content:center}
@@ -350,7 +346,6 @@
   .navlinks button.active{color:#ffe080;background:linear-gradient(180deg,rgba(52,104,176,.24),rgba(12,36,77,.32));box-shadow:inset 0 0 0 1px rgba(101,168,255,.2)}
   .navlinks button.active::after{bottom:4px;left:20px;right:20px;height:2px;box-shadow:0 0 8px #ffc85b}
   .navsearch{min-width:190px;border-radius:14px;background:rgba(8,28,65,.84);border-color:rgba(91,151,230,.23)}
-  .bell{background:transparent;border-color:transparent}
   .profile{border-radius:16px;border-color:rgba(85,161,245,.29);background:rgba(7,30,69,.82)}
   .profile .pa{border-radius:50%;border:2px solid rgba(54,202,255,.5)}
 
@@ -412,7 +407,7 @@
   footer{background:linear-gradient(180deg,rgba(2,15,39,.75),rgba(1,8,25,.98));border-top-color:rgba(38,174,255,.23);box-shadow:0 -12px 35px rgba(0,114,255,.05)}
 
   @media(max-width:760px){
-    nav{height:auto}.navbar{height:auto;min-height:70px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}.navlinks{order:3;width:100%;overflow-x:auto;margin:0}.navlinks button{white-space:nowrap;padding:9px 13px}.nav-right{margin-left:auto}.bell{display:none}.profile .pn,.profile .pl,.profile .car{display:none}.profile{padding:3px}.hero{padding:30px 24px}.hero-grid{grid-template-columns:1fr}.hero h1{font-size:47px}.hero .tline{font-size:17px;letter-spacing:3px}.hero-right{min-height:220px}.speech{left:0}.mascot{width:210px;margin-left:auto}.stat-row{grid-template-columns:1fr 1fr}.stat{min-height:105px}.stat .num{font-size:27px}.grid.two,.grid.three{grid-template-columns:1fr!important}.nm-grid{grid-template-columns:repeat(2,1fr)}
+    nav{height:auto}.navbar{height:auto;min-height:70px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}.navlinks{order:3;width:100%;overflow-x:auto;margin:0}.navlinks button{white-space:nowrap;padding:9px 13px}.nav-right{margin-left:auto}.profile .pn,.profile .pl,.profile .car{display:none}.profile{padding:3px}.hero{padding:30px 24px}.hero-grid{grid-template-columns:1fr}.hero h1{font-size:47px}.hero .tline{font-size:17px;letter-spacing:3px}.hero-right{min-height:220px}.speech{left:0}.mascot{width:210px;margin-left:auto}.stat-row{grid-template-columns:1fr 1fr}.stat{min-height:105px}.stat .num{font-size:27px}.grid.two,.grid.three{grid-template-columns:1fr!important}.nm-grid{grid-template-columns:repeat(2,1fr)}
   }
   @media(max-width:440px){.wrap{padding-left:12px;padding-right:12px}.logo .wm-en{display:none}.logo .wm-zh{font-size:17px}.nav-right{gap:4px}.hero{padding:26px 20px}.hero h1{font-size:41px}.hero .kicker{font-size:8px;letter-spacing:1px}.stat-row{grid-template-columns:1fr}.stat{min-height:96px}.foot .links{margin-left:0;flex-wrap:wrap}}
 </style>
@@ -433,7 +428,6 @@
   <div class="navlinks" id="navlinks"></div>
   <div class="nav-right">
     <div class="navsearch">🔍<input placeholder="搜索书籍 / Diamond"></div>
-    <div class="bell">🔔<span class="dot">3</span></div>
     <div class="profile">
       <span class="pa" id="me-av"></span>
       <span><span class="pn">Wenly</span><br><span class="pl">Lv.28</span></span>
@@ -929,7 +923,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const medals=['🥇','🥈','🥉'];
 
 /* =================== NAV =================== */
-const VIEWS=[['dashboard','概览'],['diamond','+ Diamond'],['books','书库'],['members','成员'],['leaderboard','排行榜']];
+const VIEWS=[['dashboard','Dashboard'],['diamond','+ Diamond'],['books','书库'],['members','成员'],['leaderboard','排行榜']];
 function renderChrome(){
   $('#nav-logo').innerHTML=logoLockup(46);
   $('#me-av').innerHTML=`<img src="${asset('av-wf1')}" alt="">`;
