@@ -85,7 +85,7 @@
     border:1px solid var(--line2);
     background:
       linear-gradient(90deg,rgba(4,10,24,.80) 0%,rgba(4,10,24,.46) 30%,rgba(4,10,24,.12) 55%,rgba(4,10,24,.03) 74%,transparent 100%),
-      url('assets/hero-bg.png') center/cover no-repeat,
+      url('https://uszuzntnsrcruvoepwzw.supabase.co/storage/v1/object/public/assets/hero-bg.png') center/cover no-repeat,
       #0A1430;
     box-shadow:0 30px 70px -40px rgba(0,0,0,.8)}
   .hero .shelf{position:absolute;inset:0;pointer-events:none;opacity:.55;mix-blend-mode:screen;
@@ -348,7 +348,7 @@
     min-height:365px;padding:42px 48px;border-radius:25px;border-color:rgba(70,178,255,.5);
     background:
       linear-gradient(90deg,rgba(4,10,24,.80) 0%,rgba(4,10,24,.44) 30%,rgba(4,10,24,.10) 56%,rgba(4,10,24,.02) 76%,transparent 100%),
-      url('assets/hero-bg.png') center/cover no-repeat,
+      url('https://uszuzntnsrcruvoepwzw.supabase.co/storage/v1/object/public/assets/hero-bg.png') center/cover no-repeat,
       #0A1430;
     box-shadow:inset 0 0 75px rgba(3,8,32,.38),0 25px 70px -37px #000,0 0 30px rgba(0,132,255,.1)
   }
@@ -405,6 +405,7 @@
   }
   @media(max-width:440px){.wrap{padding-left:12px;padding-right:12px}.logo .wm-en{display:none}.logo .wm-zh{font-size:17px}.nav-right{gap:4px}.hero{padding:26px 20px}.hero h1{font-size:41px}.hero .kicker{font-size:8px;letter-spacing:1px}.stat-row{grid-template-columns:1fr}.stat{min-height:96px}.foot .links{margin-left:0;flex-wrap:wrap}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="bubbles" id="bubbles"></div>
@@ -460,7 +461,7 @@ function logoMark(size){return `<svg class="mark" style="width:${size}px;height:
   <path d="M66 30c5-7 13-9 20-6-3 1-6 4-7 8 5 0 10 2 13 6-7 2-14 1-20-3-3-2-5-4-6-5z" fill="url(#og)"/>
   <circle cx="60" cy="50" r="4.4" fill="#05101f"/>
 </svg>`;}
-function logoLockup(h){return `<span class="logo"><img class="logo-mk" style="height:${h}px" src="assets/logo-mark.png" alt="">
+function logoLockup(h){return `<span class="logo"><img class="logo-mk" style="height:${h}px" src="${asset('logo-mark')}" alt="">
   <span><span class="wm-zh">海洋图书馆</span><span class="wm-en">OCEAN EDUCATION LIBRARY GROUP</span></span></span>`;}
 
 /* =================== STYLIZED SVG CREATURES =================== */
@@ -521,10 +522,23 @@ function crab(c){const p=PAL[c]||PAL.coral;return `<svg viewBox="0 0 64 64">
 </svg>`;}
 const CREA={whale,octopus,starfish,jelly,puffer,crab};
 function creature(type,color,opt){return (CREA[type]||whale)(color,opt);}
-function avatar(m,size){return `<span class="av" style="width:${size}px;height:${size}px"><img src="assets/${m.img||'av-wf1'}.png" alt=""></span>`;}
+/* ===== Supabase (live data) ===== */
+const SUPA_URL="https://uszuzntnsrcruvoepwzw.supabase.co";
+const SUPA_KEY="sb_publishable_2vAln6c-sN38jYWhxatuFQ_4k6dWT-8";
+const sb=(window.supabase&&SUPA_URL.indexOf('http')===0)?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
+/* Images: default = deployed /assets folder (reliable on Vercel).
+   To serve from Supabase Storage instead, comment the first line and uncomment the second. */
+const ASSET_BASE=SUPA_URL+"/storage/v1/object/public/assets/";  // images from Supabase Storage
+// const ASSET_BASE="assets/";  // ← use this instead if you deploy the assets/ folder to Vercel
+const imgFile=(n)=>{n=n||'m1';return String(n).endsWith('.png')?n:n+'.png';};
+const asset=(n)=>ASSET_BASE+imgFile(n);
+// If an image fails from one source, retry from the other (Storage <-> local assets/)
+window.addEventListener('error',function(e){var t=e.target;if(t&&t.tagName==='IMG'&&!t.dataset.tried){t.dataset.tried='1';var f=t.src.substring(t.src.lastIndexOf('/')+1);t.src=(t.src.indexOf('/storage/')>-1?'assets/'+f:SUPA_URL+'/storage/v1/object/public/assets/'+f);}},true);
+const fmtTime=(t)=>{try{return t?new Date(t).toLocaleString('zh-CN',{month:'long',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'刚刚';}catch(e){return '刚刚';}};
+function avatar(m,size){return `<span class="av" style="width:${size}px;height:${size}px"><img src="${asset(m.img||'m1')}" alt=""></span>`;}
 
 /* =================== DATA =================== */
-const MEMBERS=[
+let MEMBERS=[
   {name:'Wenly',lv:28,role:'馆长',pts:12580,weekly:8,books:42,diamonds:310},
   {name:'Cheryl',lv:22,role:'资深',pts:9420,weekly:6,books:33,diamonds:240},
   {name:'Mira',lv:18,role:'资深',pts:7860,weekly:5,books:28,diamonds:190},
@@ -563,7 +577,7 @@ const POLL={q:'今天的阅读让你最大的收获是？',
   opts:[{t:'学到了新知识',ic:'📘',col:'#2EA0F0'},{t:'启发了新思考',ic:'💡',col:'#F2C44E'},{t:'激发了新行动',ic:'🚀',col:'#8A7BFF'}],
   counts:[186,145,82],voted:null};
 
-const DIAMONDS=[
+let DIAMONDS=[
   {who:'Jorryn',img:'av-c-whaleA',title:'躺平，是浪费你的人生',time:'2026年5月31日',qt:`DIAMOND SHARING-CHERYL
 1. 真正的可怕不是累，而是你在“躺平”中废掉自己
 
@@ -825,7 +839,7 @@ const HOT=[
   {t:'寂静的春天',a:'蕾切尔·卡森',heat:85.1,ic:'🌿',cv:'linear-gradient(160deg,#34d6a6,#0c4a3a)'},
 ];
 
-const BOOKS=[
+let BOOKS=[
   ['目标感','威廉·戴蒙','🎯'],
   ['反脆弱','纳西姆·尼古拉斯·塔勒布','🧱'],
   ['幸福的陷阱','路斯·哈里斯','🪤'],
@@ -908,7 +922,7 @@ const medals=['🥇','🥈','🥉'];
 const VIEWS=[['dashboard','概览'],['diamond','+ Diamond'],['books','书库'],['members','成员'],['leaderboard','排行榜']];
 function renderChrome(){
   $('#nav-logo').innerHTML=logoLockup(46);
-  $('#me-av').innerHTML='<img src="assets/av-wf1.png" alt="">';
+  $('#me-av').innerHTML=`<img src="${asset('av-wf1')}" alt="">`;
   $('#foot-logo').innerHTML=logoLockup(40);
   $('#navlinks').innerHTML=VIEWS.map((v,i)=>`<button data-v="${v[0]}" class="${i===0?'active':''}">${v[1]}</button>`).join('');
   $('#navlinks').querySelectorAll('button').forEach(b=>b.onclick=()=>switchView(b.dataset.v));
@@ -967,16 +981,16 @@ function renderDashboard(){
       <div class="hero-right">
         <div class="trident">🔱</div>
         <div class="speech">嗨！我是<b>鲸宝</b> 🐳<br>今天想探索什么知识呢？</div>
-        <img class="mascot" src="assets/mascot-hero.png" alt="鲸宝">
+        <img class="mascot" src="${asset('mascot-hero')}" alt="鲸宝">
       </div>
     </div>
   </div>
 
   <!-- STATS -->
   <div class="stat-row" style="margin-top:20px">
-    <div class="glass stat"><div class="lbl">Diamond 总数</div><div class="num">1,258</div><div class="delta">+128 本周新增</div><span class="em" style="width:78px;height:78px"><img src="assets/pose4.png" style="width:100%;height:100%;object-fit:contain"></span></div>
-    <div class="glass stat"><div class="lbl">活跃成员</div><div class="num">328</div><div class="delta">+24 本周新增</div><span class="em" style="width:80px;height:80px"><img src="assets/pose1.png" style="width:100%;height:100%;object-fit:contain"></span></div>
-    <div class="glass stat"><div class="lbl">馆藏书籍</div><div class="num">842</div><div class="delta">+36 本周新增</div><span class="em" style="width:80px;height:80px"><img src="assets/pose2.png" style="width:100%;height:100%;object-fit:contain"></span></div>
+    <div class="glass stat"><div class="lbl">Diamond 总数</div><div class="num">1,258</div><div class="delta">+128 本周新增</div><span class="em" style="width:78px;height:78px"><img src="${asset('pose4')}" style="width:100%;height:100%;object-fit:contain"></span></div>
+    <div class="glass stat"><div class="lbl">活跃成员</div><div class="num">328</div><div class="delta">+24 本周新增</div><span class="em" style="width:80px;height:80px"><img src="${asset('pose1')}" style="width:100%;height:100%;object-fit:contain"></span></div>
+    <div class="glass stat"><div class="lbl">馆藏书籍</div><div class="num">842</div><div class="delta">+36 本周新增</div><span class="em" style="width:80px;height:80px"><img src="${asset('pose2')}" style="width:100%;height:100%;object-fit:contain"></span></div>
     <div class="glass stat"><div class="lbl">本周进度</div><div class="num">78%</div><div class="delta" style="color:var(--gold)">超过了 82% 的成员</div>${ring(78)}</div>
   </div>
 
@@ -1007,7 +1021,7 @@ function renderDashboard(){
     </div>
     <div class="glass" style="padding:20px">
       <div class="sec-h">📑 推荐书单 <span class="all" onclick="switchView('books')">更多书单 ›</span></div>
-      ${BOOKLISTS.map(b=>b.feat?`<div class="bl-feat"><div class="t">${b.t}</div><div class="d">${b.d}</div><div class="c">共 ${b.n} 本书</div><span class="em" style="width:90px;height:90px"><img src="assets/pose5.png" style="width:100%;height:100%;object-fit:contain"></span></div>`
+      ${BOOKLISTS.map(b=>b.feat?`<div class="bl-feat"><div class="t">${b.t}</div><div class="d">${b.d}</div><div class="c">共 ${b.n} 本书</div><span class="em" style="width:90px;height:90px"><img src="${asset('pose5')}" style="width:100%;height:100%;object-fit:contain"></span></div>`
         :`<div class="bl-row"><span class="bl-thumb" style="background:${b.col}26;color:${b.col}">${b.ic}</span><div><div class="t">${b.t}</div><div class="c">共 ${b.n} 本书</div></div></div>`).join('')}
     </div>
     <div class="glass" style="padding:20px">
@@ -1023,7 +1037,7 @@ function renderDashboard(){
   <!-- CATEGORIES -->
   <div class="glass" style="padding:20px;margin-top:20px">
     <div class="sec-h">📚 精选分类 <span class="all" onclick="switchView('books')">前往书库 ›</span></div>
-    <div class="cat-grid">${CATS.map(c=>`<img src="assets/${c}.png" onclick="switchView('books')" alt="">`).join('')}</div>
+    <div class="cat-grid">${CATS.map(c=>`<img src="${asset(c)}" onclick="switchView('books')" alt="">`).join('')}</div>
   </div>
 
   <!-- NEW MEMBERS + LEADERBOARD -->
@@ -1037,7 +1051,7 @@ function renderDashboard(){
       <div class="sec-h">🏆 成员排行榜 <span class="all" onclick="switchView('leaderboard')">本月 ›</span></div>
       <div class="podium">
         ${[lb[1],lb[0],lb[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
-          <img class="podium-whale" src="assets/${k===1?'podium1':(k===0?'podium2':'podium3')}.png" alt="">
+          <img class="podium-whale" src="${asset(k===1?'podium1':(k===0?'podium2':'podium3'))}" alt="">
           <div class="pn">${m.name}</div><div class="pp">${fmt(m.pts)} <small>积分</small></div></div>`;}).join('')}
       </div>
       ${lb.slice(3).map((m,i)=>`<div class="lrow"><span class="rk">${i+4}</span>${avatar(m,34)}
@@ -1115,7 +1129,7 @@ function renderBooks(){
   $('#view-books').innerHTML=`
    <h2 class="view-h">📖 书库</h2>
    <div class="sub-h">${BOOKS.length} 本来自海洋图书馆群聊与附件的书籍。</div>
-   <div class="cat-grid" style="margin-bottom:18px">${CATS.map(c=>`<img src="assets/${c}.png" alt="">`).join('')}</div>
+   <div class="cat-grid" style="margin-bottom:18px">${CATS.map(c=>`<img src="${asset(c)}" alt="">`).join('')}</div>
    <input class="search" id="book-search" placeholder="按书名或作者搜索……">
    <div class="grid3" id="book-grid"></div>`;
   const hues=['#2e7bf0','#19c0d8','#6e5cf5','#34d6a6','#f2a44e','#ff7e5c'];
@@ -1152,10 +1166,10 @@ function renderLeaderboard(){
    <h2 class="view-h">🏆 排行榜</h2>
    <div class="sub-h">按本月总积分排名 · 每记录一条 Diamond 即可获得积分。</div>
    <div class="glass" style="padding:24px;position:relative;overflow:hidden">
-     <img src="assets/trophy.png" style="position:absolute;right:-14px;top:6px;width:130px;opacity:.16;pointer-events:none" alt="">
+     <img src="${asset('trophy')}" style="position:absolute;right:-14px;top:6px;width:130px;opacity:.16;pointer-events:none" alt="">
      <div class="podium" style="margin-bottom:20px">
        ${[t3[1],t3[0],t3[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
-         <img class="podium-whale" src="assets/${k===1?'podium1':(k===0?'podium2':'podium3')}.png" alt="">${avatar(m,0)&&''}
+         <img class="podium-whale" src="${asset(k===1?'podium1':(k===0?'podium2':'podium3'))}" alt="">${avatar(m,0)&&''}
          <div class="pn">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}</div>
          <div class="lv" style="font-size:10px;color:var(--sec)">Lv.${m.lv}</div>
          <div class="pp" style="font-size:20px">${fmt(m.pts)} <small>积分</small></div></div>`;}).join('')}
@@ -1171,10 +1185,37 @@ function renderLeaderboard(){
 function makeBubbles(){const b=$('#bubbles');let h='';for(let i=0;i<16;i++){const s=4+Math.random()*22,l=Math.random()*100,d=8+Math.random()*16,dl=-Math.random()*16;
   h+=`<i style="left:${l}%;width:${s}px;height:${s}px;animation-duration:${d}s;animation-delay:${dl}s"></i>`;}b.innerHTML=h;}
 function renderAll(){renderDashboard();renderDiamond();renderBooks();renderMembers();renderLeaderboard();}
+
+/* ===== Load live data from Supabase (falls back to built-in data) ===== */
+async function loadFromSupabase(){
+  if(!sb) return;
+  try{
+    const [m,b,dia]=await Promise.all([
+      sb.from('members').select('*').order('points',{ascending:false}),
+      sb.from('books').select('*'),
+      sb.from('diamonds').select('*').order('created_at',{ascending:false})
+    ]);
+    if(m&&m.data&&m.data.length){
+      MEMBERS=m.data.map(r=>({name:r.name,lv:r.level||0,pts:r.points||0,weekly:r.weekly||0,
+        books:r.books_count||0,diamonds:r.diamonds||0,role:r.role||'',isNew:!!r.is_new,img:r.avatar||'m1.png'}));
+    }
+    if(b&&b.data&&b.data.length){
+      BOOKS=b.data.map(r=>[r.title,r.author||'',r.icon||'📘']);
+    }
+    if(dia&&dia.data&&dia.data.length){
+      DIAMONDS=dia.data.map(r=>({who:r.author_name,title:r.title,qt:r.body||'',time:fmtTime(r.created_at),img:r.avatar||'m1.png'}));
+    }
+  }catch(e){console.warn('Supabase load failed — using built-in data.',e);}
+}
 $('#book-close').onclick=closeBook;
 $('#book-modal').onclick=e=>{if(e.target.id==='book-modal')closeBook();};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#book-modal').hidden)closeBook();});
-makeBubbles();renderChrome();renderAll();
+async function boot(){
+  makeBubbles();renderChrome();renderAll();        // instant render with built-in data
+  await loadFromSupabase();                          // then pull live data if available
+  renderChrome();renderAll();
+}
+boot();
 </script>
 </body>
 </html>
