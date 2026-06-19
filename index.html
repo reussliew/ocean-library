@@ -197,6 +197,17 @@
   .reader-entry summary small{margin-left:auto;color:var(--muted);font-weight:600}
   .reader-entry .reader-diamond{white-space:pre-wrap;line-height:1.65;color:var(--sec);font-size:13px;border-left:2px solid var(--gold);padding:4px 0 14px 13px;margin:0 0 12px 47px}
   .no-readers{padding:18px 0;color:var(--muted)}
+  .app-overlay{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(1,8,25,.86);backdrop-filter:blur(10px)}
+  .app-overlay[hidden]{display:none}
+  .app-panel{width:min(480px,100%);padding:26px;border-radius:22px;position:relative}
+  .app-panel h2{font-size:23px;margin-bottom:5px}.app-panel .sub-h{margin-bottom:16px}
+  .admin-grid{display:grid;gap:16px}.admin-list{display:grid;gap:8px;max-height:520px;overflow:auto}
+  .admin-row{display:grid;grid-template-columns:minmax(100px,1fr) 90px 110px auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--line)}
+  .admin-row input{min-width:0;background:rgba(4,25,64,.85);border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--text)}
+  .mini-btn{border:1px solid var(--line2);background:rgba(46,123,240,.16);color:var(--text);border-radius:8px;padding:7px 10px;cursor:pointer;font-weight:700}
+  .mini-btn.danger{color:#ff9caf;border-color:rgba(255,84,112,.35);background:rgba(255,84,112,.09)}
+  .teacher-chip{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line2);border-radius:12px;margin-bottom:15px}
+  .form-status{font-size:12px;color:var(--teal);margin-top:10px;text-align:center;min-height:20px}
 
   /* ---------- book lists ---------- */
   .bl-feat{border-radius:16px;padding:18px;position:relative;overflow:hidden;margin-bottom:13px;
@@ -528,8 +539,7 @@ const SUPA_KEY="sb_publishable_2vAln6c-sN38jYWhxatuFQ_4k6dWT-8";
 const sb=(window.supabase&&SUPA_URL.indexOf('http')===0)?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 /* Images: default = deployed /assets folder (reliable on Vercel).
    To serve from Supabase Storage instead, comment the first line and uncomment the second. */
-const ASSET_BASE=SUPA_URL+"/storage/v1/object/public/assets/";  // images from Supabase Storage
-// const ASSET_BASE="assets/";  // ← use this instead if you deploy the assets/ folder to Vercel
+const ASSET_BASE="assets/";
 const imgFile=(n)=>{n=n||'m1';return String(n).endsWith('.png')?n:n+'.png';};
 const asset=(n)=>ASSET_BASE+imgFile(n);
 // If an image fails from one source, retry from the other (Storage <-> local assets/)
@@ -1217,5 +1227,6 @@ async function boot(){
 }
 boot();
 </script>
+<script src="app-supabase.js"></script>
 </body>
 </html>
