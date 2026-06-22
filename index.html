@@ -859,9 +859,32 @@ const HOT=[
   {t:'平凡的世界（全三册）',a:'路遥',ic:'🌍',cv:'linear-gradient(160deg,#19c0d8,#0c4a66)'},
 ];
 
-const COPYABLE_LEADERSHIP_PDF='assets/books/copyable-leadership-fan-deng.pdf';
+const BOOK_PDF_BASE='https://ocean-library-zeta.vercel.app/';
+const BOOK_PDF_FILES={
+  '可复制的领导力：樊登的9堂商业课':'copyable-leadership-fan-deng.pdf',
+  '目标感':'sense-of-purpose.pdf','反脆弱':'antifragile.pdf','幸福的陷阱':'the-happiness-trap.pdf',
+  '演讲的力量':'the-power-of-speaking.pdf','反惰性':'breaking-laziness.pdf',
+  '请这样对待孩子的大脑':'how-to-treat-a-childs-brain.pdf',
+  '无意识顺从与觉知':'unconscious-compliance-and-awareness.pdf',
+  '名人成长励志故事':'inspirational-stories-of-famous-people.pdf',
+  '允许一切发生':'allow-everything-to-happen.pdf','主角模式':'main-character-mode.pdf',
+  '稳定工作 VS 高薪工作？':'stable-job-vs-high-paying-job.pdf',
+  '为什么你的学生不思考':'why-dont-students-like-school.pdf',
+  '理解人性':'understanding-human-nature.pdf','捉弄人的大脑':'the-tricky-brain.pdf',
+  '学会提问':'asking-the-right-questions.pdf','销售就是玩转情商':'sales-emotional-intelligence.pdf',
+  '时间管理':'time-management.pdf','人性的阻力':'human-resistance.pdf','停补':'ting-bu.pdf',
+  '能力陷阱':'the-competency-trap.pdf','躺平，是在浪费你的人生':'lying-flat-is-wasting-your-life.pdf',
+  '博弈论':'game-theory.pdf'
+};
+function cleanPdfTitle(title){
+  return String(title||'').replace(/[《》]/g,'').replace(/^大会分享：/,'').replace(/^📍/,'').trim();
+}
+function bookPdfUrl(title){
+  const clean=cleanPdfTitle(title);
+  return BOOK_PDF_FILES[clean]?BOOK_PDF_BASE+BOOK_PDF_FILES[clean]:'';
+}
 let BOOKS=[
-  ['可复制的领导力：樊登的9堂商业课','樊登','🧭',COPYABLE_LEADERSHIP_PDF,'copyable-leadership-fan-deng.pdf'],
+  ['可复制的领导力：樊登的9堂商业课','樊登','🧭',bookPdfUrl('可复制的领导力：樊登的9堂商业课'),''],
   ['目标感','威廉·戴蒙','🎯'],
   ['反脆弱','纳西姆·尼古拉斯·塔勒布','🧱'],
   ['幸福的陷阱','路斯·哈里斯','🪤'],
@@ -930,6 +953,7 @@ let BOOKS=[
   ['为什么你不道歉','哈丽特·勒纳','🤝'],
   ['躺平，是在浪费你的人生','作者未标注','🌱'],
 ];
+BOOKS=BOOKS.map(book=>[book[0],book[1],book[2],bookPdfUrl(book[0])||book[3]||'',book[4]||'']);
 
 const now=new Date();
 function stamp(){return now.toLocaleString('zh-CN',{year:'2-digit',month:'long',day:'numeric',weekday:'long',hour:'numeric',minute:'2-digit',hour12:true});}
@@ -1266,8 +1290,8 @@ async function loadFromSupabase(){
     }
     if(b&&b.data&&b.data.length){
       BOOKS=b.data.map(r=>{
-        const fallback=r.title==='可复制的领导力：樊登的9堂商业课'?COPYABLE_LEADERSHIP_PDF:'';
-        return [r.title,r.author||'',r.icon||'📘',r.pdf_url||fallback,r.pdf_path||''];
+        const pdfUrl=bookPdfUrl(r.title)||r.pdf_url||'';
+        return [r.title,r.author||'',r.icon||'📘',pdfUrl,r.pdf_path||''];
       });
     }
     if(dia&&dia.data&&dia.data.length){
@@ -1293,6 +1317,6 @@ async function boot(){
 }
 boot();
 </script>
-<script src="app-supabase.js?v=20260622-1828"></script>
+<script src="app-supabase.js?v=20260622-1915"></script>
 </body>
 </html>
