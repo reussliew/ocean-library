@@ -859,8 +859,9 @@ const HOT=[
   {t:'平凡的世界（全三册）',a:'路遥',ic:'🌍',cv:'linear-gradient(160deg,#19c0d8,#0c4a66)'},
 ];
 
+const COPYABLE_LEADERSHIP_PDF='assets/books/copyable-leadership-fan-deng.pdf';
 let BOOKS=[
-  ['可复制的领导力：樊登的9堂商业课','樊登','🧭','copyable-leadership-fan-deng.pdf',''],
+  ['可复制的领导力：樊登的9堂商业课','樊登','🧭',COPYABLE_LEADERSHIP_PDF,'copyable-leadership-fan-deng.pdf'],
   ['目标感','威廉·戴蒙','🎯'],
   ['反脆弱','纳西姆·尼古拉斯·塔勒布','🧱'],
   ['幸福的陷阱','路斯·哈里斯','🪤'],
@@ -1264,7 +1265,10 @@ async function loadFromSupabase(){
         books:r.books_count||0,diamonds:r.diamonds||0,role:r.role||'',isNew:!!r.is_new,img:r.avatar||'m1.png'}));
     }
     if(b&&b.data&&b.data.length){
-      BOOKS=b.data.map(r=>[r.title,r.author||'',r.icon||'📘',r.pdf_url||'',r.pdf_path||'']);
+      BOOKS=b.data.map(r=>{
+        const fallback=r.title==='可复制的领导力：樊登的9堂商业课'?COPYABLE_LEADERSHIP_PDF:'';
+        return [r.title,r.author||'',r.icon||'📘',r.pdf_url||fallback,r.pdf_path||''];
+      });
     }
     if(dia&&dia.data&&dia.data.length){
       DIAMONDS=dia.data.map(r=>({who:r.author_name,title:canonicalBookTitle(r.title),qt:r.body||'',time:fmtTime(r.created_at),createdAt:r.created_at,img:r.avatar||'m1.png'}));
@@ -1289,6 +1293,6 @@ async function boot(){
 }
 boot();
 </script>
-<script src="app-supabase.js?v=20260622-1748"></script>
+<script src="app-supabase.js?v=20260622-1828"></script>
 </body>
 </html>
