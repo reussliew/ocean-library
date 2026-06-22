@@ -860,6 +860,7 @@ const HOT=[
 ];
 
 let BOOKS=[
+  ['可复制的领导力：樊登的9堂商业课','樊登','🧭','assets/books/copyable-leadership-fan-deng.pdf',''],
   ['目标感','威廉·戴蒙','🎯'],
   ['反脆弱','纳西姆·尼古拉斯·塔勒布','🧱'],
   ['幸福的陷阱','路斯·哈里斯','🪤'],
@@ -1046,7 +1047,7 @@ function renderDashboard(){
       <div class="sec-h">📈 本周阅读进度 <span class="all" onclick="switchView('leaderboard')">查看全部 ›</span></div>
       ${prog.map((m,i)=>`<div class="prow">
         ${avatar(m,42)}
-        <div class="info"><div class="nm">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}</div><div class="lv">Lv.${m.lv}</div></div>
+        <div class="info"><div class="nm">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}</div><div class="lv">总积分 ${m.pts}</div></div>
         <div class="cnt">本周分享 ${m.weekly} 篇</div>
         <div class="pbar"><i style="width:${m.weekly/maxWeekly*100}%"></i></div>
         <div class="pct">${m.weekly} 篇</div>
@@ -1178,6 +1179,7 @@ function showBook(index){
   $('#book-modal-content').innerHTML=`
     <h2 class="view-h" id="book-modal-title" style="font-size:24px;padding-right:42px">${esc(book[0])}</h2>
     <div class="book-author">${esc(book[1])}</div>
+    ${book[3]?`<a class="btn btn-gold" style="width:100%;justify-content:center;margin:16px 0 8px" href="${esc(book[3])}" target="_blank" rel="noopener noreferrer">📖 阅读书本</a>`:''}
     <button class="btn btn-blue" style="width:100%;justify-content:center;margin:16px 0" onclick="shareBookDiamond(${index})">💎 分享这本书的 Diamond</button>
     <div class="sec-h">正在阅读 / 已分享 Diamond 的成员</div>
     ${readerHTML||'<div class="no-readers">暂无阅读记录</div>'}`;
@@ -1262,7 +1264,7 @@ async function loadFromSupabase(){
         books:r.books_count||0,diamonds:r.diamonds||0,role:r.role||'',isNew:!!r.is_new,img:r.avatar||'m1.png'}));
     }
     if(b&&b.data&&b.data.length){
-      BOOKS=b.data.map(r=>[r.title,r.author||'',r.icon||'📘']);
+      BOOKS=b.data.map(r=>[r.title,r.author||'',r.icon||'📘',r.pdf_url||'',r.pdf_path||'']);
     }
     if(dia&&dia.data&&dia.data.length){
       DIAMONDS=dia.data.map(r=>({who:r.author_name,title:canonicalBookTitle(r.title),qt:r.body||'',time:fmtTime(r.created_at),createdAt:r.created_at,img:r.avatar||'m1.png'}));
@@ -1287,6 +1289,6 @@ async function boot(){
 }
 boot();
 </script>
-<script src="app-supabase.js"></script>
+<script src="app-supabase.js?v=20260622-1635"></script>
 </body>
 </html>

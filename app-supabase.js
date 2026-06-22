@@ -49,6 +49,27 @@
 
   function closeTeacherPicker(){document.querySelector('#teacher-picker').hidden=true;}
 
+  async function recordTeacherActivity(name){
+    if(!name)return;
+    const {error}=await sb.from('teacher_activity').upsert({member_name:name,last_seen:new Date().toISOString()},{onConflict:'member_name'});
+    if(error)console.warn('Teacher activity could not be recorded',error);
+  }
+
+  window.submitDailyVote=async optionIndex=>{
+    const member=teacherMember();
+    if(!member){openTeacherPicker();return;}
+    document.querySelectorAll('#dash-poll .opt').forEach(button=>button.disabled=true);
+    const {error}=await sb.from('daily_votes').insert({
+      vote_date:malaysiaDateKey(),
+      member_name:member.name,
+      question_key:POLL.key,
+      option_index:optionIndex
+    });
+    if(error&&error.code!=='23505')console.warn('Daily vote failed',error);
+    await refreshData();
+    switchView('dashboard');
+  };
+
   function updateTeacherUI(){
     const member=teacherMember();
     if(!member){openTeacherPicker();return;}
@@ -71,13 +92,25 @@
       MEMBERS=BUILTIN_MEMBERS.map(m=>liveByName.get(m.name)||m);
       MEMBERS.sort((a,b)=>b.pts-a.pts);
     }
-    if(BOOKS.length<10){
-      const liveByTitle=new Map(BOOKS.map(b=>[b[0],b]));
-      BOOKS=BUILTIN_BOOKS.map(b=>liveByTitle.get(b[0])||b);
-    }
+    const liveBooks=BOOKS.slice();
+    const liveByTitle=new Map(liveBooks.map(b=>[b[0],b]));
+    const builtinTitles=new Set(BUILTIN_BOOKS.map(b=>b[0]));
+    BOOKS=[...BUILTIN_BOOKS.map(b=>{
+      const live=liveByTitle.get(b[0]);
+      return live?[live[0],live[1]||b[1],live[2]||b[2],live[3]||b[3]||'',live[4]||b[4]||'']:b;
+    }),...liveBooks.filter(b=>!builtinTitles.has(b[0]))];
     const liveDiamonds=DIAMONDS.slice();
     const liveKeys=new Set(liveDiamonds.map(d=>`${d.who}|${d.title}|${d.qt}`));
     DIAMONDS=[...liveDiamonds,...BUILTIN_DIAMONDS.filter(d=>!liveKeys.has(`${d.who}|${d.title}|${d.qt}`))];
+    const knownBookTitles=new Set(BOOKS.map(b=>b[0]));
+    DIAMONDS.forEach(d=>{
+      const title=canonicalBookTitle(d.title);
+      d.title=title;
+      if(title&&!knownBookTitles.has(title)){
+        BOOKS.push([title,'','📘']);
+        knownBookTitles.add(title);
+      }
+    });
     renderChrome();
     renderAll();
     updateTeacherUI();
@@ -159,6 +192,8 @@
       <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
         <button class="mini-btn" id="admin-refresh">刷新数据</button>
         <button class="mini-btn" id="sync-books">同步当前书库</button>
+        <button class="mini-btn" id="sync-diamonds">同步历史 Diamond</button>
+        <button class="mini-btn" id="recalculate-points">按 Diamond 重算积分</button>
         <button class="mini-btn danger" id="admin-logout">退出登录</button>
       </div>
       <div class="admin-grid">
@@ -173,9 +208,11 @@
             <input class="search" id="new-book-title" placeholder="书名"><input class="search" id="new-book-author" placeholder="作者">
             <input class="search" id="new-book-icon" value="📘"><button class="mini-btn" id="add-book">新增</button>
           </div>
-          <div class="admin-list">${(books||[]).map(b=>`<div class="admin-row" data-book="${b.id}">
+          <div class="admin-list">${(books||[]).map(b=>`<div class="admin-row" data-book="${b.id}" data-pdf-path="${esc(b.pdf_path||'')}">
             <input class="adm-book-title" value="${esc(b.title)}"><input class="adm-book-author" value="${esc(b.author||'')}">
-            <input class="adm-book-icon" value="${esc(b.icon||'📘')}"><span><button class="mini-btn save-book">保存</button> <button class="mini-btn danger delete-book">删除</button></span>
+            <input class="adm-book-icon" value="${esc(b.icon||'📘')}"><span><button class="mini-btn save-book">保存</button>
+            <label class="mini-btn" style="display:inline-block;cursor:pointer">${b.pdf_url?'替换 PDF':'上传 PDF'}<input class="adm-book-pdf" type="file" accept="application/pdf,.pdf" hidden></label>
+            ${b.pdf_path?'<button class="mini-btn danger remove-book-pdf">移除 PDF</button>':''} <button class="mini-btn danger delete-book">删除</button></span>
           </div>`).join('')}</div>
         </div>
         <div class="glass" style="padding:18px"><div class="sec-h">Diamond 记录</div>
@@ -196,6 +233,8 @@
     if(error){status.style.color='#ff9caf';status.textContent='登录失败，请检查密码或确认账号已建立。';return;}
     status.textContent='登录成功。';
     await syncBooks();
+    await syncHistoricalDiamonds();
+    await recalculatePoints();
     await refreshData();
     switchView('admin');
   }
@@ -206,10 +245,76 @@
     if(error)console.warn('Book sync failed',error);
   }
 
+  function legacyCreatedAt(value){
+    const match=String(value||'').match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+    if(!match)return new Date().toISOString();
+    return `${match[1]}-${match[2].padStart(2,'0')}-${match[3].padStart(2,'0')}T12:00:00+08:00`;
+  }
+
+  function sourceKey(value){
+    let hash=2166136261;
+    for(let i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619);}
+    return `legacy-${(hash>>>0).toString(16)}`;
+  }
+
+  async function syncHistoricalDiamonds(){
+    const {data:existing,error:readError}=await sb.from('diamonds').select('author_name,title,body');
+    if(readError){console.warn('Historical Diamond check failed',readError);return;}
+    const existingKeys=new Set((existing||[]).map(d=>`${d.author_name}|${canonicalBookTitle(d.title)}|${d.body||''}`));
+    const payload=BUILTIN_DIAMONDS.filter(d=>!existingKeys.has(`${d.who}|${canonicalBookTitle(d.title)}|${d.qt}`)).map(d=>{
+      const title=canonicalBookTitle(d.title);
+      return {
+        author_name:d.who,
+        title,
+        body:d.qt,
+        avatar:imgFile(d.img||'av-wf1'),
+        created_at:legacyCreatedAt(d.time),
+        source_key:sourceKey(`${d.who}|${title}|${d.time}|${d.qt}`)
+      };
+    });
+    if(!payload.length)return;
+    const {error}=await sb.from('diamonds').upsert(payload,{onConflict:'source_key',ignoreDuplicates:true});
+    if(error)console.warn('Historical Diamond sync failed',error);
+  }
+
+  async function recalculatePoints(){
+    const {error}=await sb.rpc('recalculate_member_points');
+    if(error)console.warn('Point recalculation failed',error);
+  }
+
+  async function uploadBookPdf(bookRow,file){
+    if(!file)return;
+    if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf')){
+      alert('只可以上传 PDF 文件。');return;
+    }
+    const bookId=bookRow.dataset.book;
+    const oldPath=bookRow.dataset.pdfPath;
+    const path=`book-${bookId}/${Date.now()}.pdf`;
+    const {error:uploadError}=await sb.storage.from('book-pdfs').upload(path,file,{contentType:'application/pdf',upsert:false});
+    if(uploadError){alert(`PDF 上传失败：${uploadError.message}`);return;}
+    const {data:urlData}=sb.storage.from('book-pdfs').getPublicUrl(path);
+    const {error:updateError}=await sb.from('books').update({pdf_path:path,pdf_url:urlData.publicUrl}).eq('id',bookId);
+    if(updateError){await sb.storage.from('book-pdfs').remove([path]);alert(`书籍更新失败：${updateError.message}`);return;}
+    if(oldPath)await sb.storage.from('book-pdfs').remove([oldPath]);
+    await refreshData();switchView('admin');
+  }
+
+  async function removeBookPdf(bookRow){
+    const path=bookRow.dataset.pdfPath;
+    if(path)await sb.storage.from('book-pdfs').remove([path]);
+    await sb.from('books').update({pdf_path:null,pdf_url:null}).eq('id',bookRow.dataset.book);
+  }
+
   function wireAdminActions(){
     document.querySelector('#admin-refresh').onclick=refreshData;
     document.querySelector('#sync-books').onclick=async()=>{await syncBooks();await refreshData();switchView('admin');};
+    document.querySelector('#sync-diamonds').onclick=async()=>{await syncHistoricalDiamonds();await refreshData();switchView('admin');};
+    document.querySelector('#recalculate-points').onclick=async()=>{await recalculatePoints();await refreshData();switchView('admin');};
     document.querySelector('#admin-logout').onclick=async()=>{await sb.auth.signOut();await renderAdmin();};
+    document.querySelector('#view-admin').onchange=async e=>{
+      if(!e.target.classList.contains('adm-book-pdf'))return;
+      await uploadBookPdf(e.target.closest('[data-book]'),e.target.files[0]);
+    };
     document.querySelector('#add-book').onclick=async()=>{
       const title=document.querySelector('#new-book-title').value.trim();
       if(!title)return;
@@ -225,7 +330,11 @@
       }else if(e.target.classList.contains('save-book')){
         await sb.from('books').update({title:bookRow.querySelector('.adm-book-title').value.trim(),author:bookRow.querySelector('.adm-book-author').value.trim(),icon:bookRow.querySelector('.adm-book-icon').value.trim()||'📘'}).eq('id',bookRow.dataset.book);
       }else if(e.target.classList.contains('delete-book')){
+        const pdfPath=bookRow.dataset.pdfPath;
+        if(pdfPath)await sb.storage.from('book-pdfs').remove([pdfPath]);
         await sb.from('books').delete().eq('id',bookRow.dataset.book);
+      }else if(e.target.classList.contains('remove-book-pdf')){
+        await removeBookPdf(bookRow);
       }else if(e.target.classList.contains('delete-diamond')){
         await sb.from('diamonds').delete().eq('id',diamondRow.dataset.diamond);
       }else{return;}
@@ -237,7 +346,7 @@
     if(!window.supabase||!sb)return;
     appHTML();
     renderChrome();
-    document.querySelector('#teacher-save').onclick=()=>{
+    document.querySelector('#teacher-save').onclick=async()=>{
       const input=document.querySelector('#teacher-name');
       const status=document.querySelector('#teacher-status');
       const member=teacherMember(input.value);
@@ -250,11 +359,15 @@
       localStorage.setItem(TEACHER_KEY,member.name);
       status.textContent='';
       closeTeacherPicker();
-      updateTeacherUI();
-      wireDiamondSubmit();
+      await recordTeacherActivity(member.name);
+      await refreshData();
     };
     await refreshData();
     if(!selectedTeacher())openTeacherPicker();
+    else{
+      await recordTeacherActivity(selectedTeacher());
+      await refreshData();
+    }
   }
 
   if(document.readyState==='complete')init();
