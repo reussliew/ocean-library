@@ -337,7 +337,7 @@ values
 on conflict do nothing;
 
 update public.books
-set pdf_url = 'assets/books/copyable-leadership-fan-deng.pdf',
+set pdf_url = 'https://ocean-library-zeta.vercel.app/copyable-leadership-fan-deng.pdf',
     pdf_path = null
 where title = '可复制的领导力：樊登的9堂商业课'
   and (coalesce(pdf_url, '') = '' or pdf_url like '%supabase.co/storage/%' or pdf_url not like 'http%');

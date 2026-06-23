@@ -1,0 +1,22 @@
+{
+  "name": "海洋图书馆",
+  "short_name": "海洋图书馆",
+  "description": "Ocean Education Library Group",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#061021",
+  "theme_color": "#061021",
+  "icons": [
+    {
+      "src": "assets/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
