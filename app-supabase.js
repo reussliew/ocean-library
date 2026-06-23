@@ -126,14 +126,36 @@
     button.onclick=async()=>{
       const member=teacherMember();
       if(!member){openTeacherPicker();return;}
-      const title=document.querySelector('#f-book').value.trim();
+      const newTitle=document.querySelector('#f-new-book-title')?.value.trim()||'';
+      const newAuthor=document.querySelector('#f-new-book-author')?.value.trim()||'';
+      const newIcon=document.querySelector('#f-new-book-icon')?.value.trim()||'📘';
+      const title=newTitle||document.querySelector('#f-book').value.trim();
       const body=document.querySelector('#f-text').value.trim();
       const status=document.querySelector('#diamond-status');
-      if(!title){document.querySelector('#f-book').focus();return;}
+      if(!title){
+        const inline=document.querySelector('#new-book-inline');
+        const isAdding=inline&&!inline.classList.contains('hidden');
+        (isAdding?document.querySelector('#f-new-book-title'):document.querySelector('#f-book')).focus();
+        return;
+      }
       if(!body){document.querySelector('#f-text').focus();return;}
       button.disabled=true;
       button.textContent='提交中…';
       status.textContent='';
+      if(newTitle){
+        const {error:bookError}=await sb.from('books').upsert({
+          title:newTitle,
+          author:newAuthor||'作者未标注',
+          icon:newIcon
+        },{onConflict:'title'});
+        if(bookError){
+          status.style.color='#ff9caf';
+          status.textContent=`新增书籍失败：${bookError.message}`;
+          button.disabled=false;
+          button.textContent='💎 提交 DIAMOND';
+          return;
+        }
+      }
       const {error}=await sb.from('diamonds').insert({
         author_name:member.name,
         title,
@@ -150,6 +172,9 @@
       status.style.color='var(--teal)';
       status.textContent='提交成功，已增加 1 积分。';
       document.querySelector('#f-book').value='';
+      if(document.querySelector('#f-new-book-title'))document.querySelector('#f-new-book-title').value='';
+      if(document.querySelector('#f-new-book-author'))document.querySelector('#f-new-book-author').value='';
+      if(document.querySelector('#f-new-book-icon'))document.querySelector('#f-new-book-icon').value='📘';
       document.querySelector('#f-text').value='';
       button.disabled=false;
       button.textContent='💎 提交 DIAMOND';

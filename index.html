@@ -1153,20 +1153,32 @@ function renderDiamond(){
      <div class="field"><label>日期</label><input id="f-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
      <div class="field"><label>页码 / 章节</label><input id="f-pages" placeholder="例如 第 45–67 页 或 第 3 章"></div>
      <div class="auto">第 25 周 · 2026 · 第 1 / 5 天（自动）</div>
-     <div class="field"><label>选择书籍</label><select id="f-book">
+     <div class="field"><label>选择书籍 <button class="mini-btn" type="button" id="show-new-book" style="margin-left:8px;padding:5px 10px">找不到？新增书籍</button></label><select id="f-book">
        <option value="">请选择正在阅读的书籍</option>
        ${BOOKS.slice().sort((a,b)=>a[0].localeCompare(b[0])).map(b=>`<option value="${esc(b[0])}">${esc(b[0])}${b[1]?` · ${esc(b[1])}`:''}</option>`).join('')}
      </select></div>
+     <div id="new-book-inline" class="hidden">
+       <div class="field"><label>新书名</label><input id="f-new-book-title" placeholder="输入书名，例如：可复制的领导力2"></div>
+       <div class="field"><label>作者（可空）</label><input id="f-new-book-author" placeholder="不知道作者可以先留空"></div>
+       <div class="field"><label>图标</label><input id="f-new-book-icon" value="📘" maxlength="4"></div>
+     </div>
      <div class="field"><label>你的 Diamond</label><textarea id="f-text" placeholder="分享你今天阅读中的关键感悟、金句或突破……"></textarea></div>
      <button class="btn btn-blue" style="width:100%;justify-content:center" id="f-submit">💎 提交 DIAMOND</button>
    </div>
    <h2 class="view-h" style="margin-top:30px;font-size:22px">成员 Diamond 记录</h2>
    <div class="sub-h">${DIAMONDS.length} 条来自群聊的原文记录，点击展开阅读全文。</div>
    <div class="diamond-archive">${archive}</div>`;
+  $('#show-new-book').onclick=()=>{
+    $('#new-book-inline').classList.toggle('hidden');
+    if(!$('#new-book-inline').classList.contains('hidden'))$('#f-new-book-title').focus();
+  };
   $('#f-submit').onclick=()=>{
     const text=$('#f-text').value.trim();
     if(!text){$('#f-text').focus();$('#f-text').style.borderColor='#ff7a90';return;}
-    DIAMONDS.unshift({who:$('#f-name').value.trim()||'匿名',img:'av-wf4',title:$('#f-book').value.trim()||'未命名',time:'刚刚',qt:text});
+    const newTitle=$('#f-new-book-title')?$('#f-new-book-title').value.trim():'';
+    const title=newTitle||$('#f-book').value.trim()||'未命名';
+    if(newTitle&&!BOOKS.some(b=>b[0]===newTitle))BOOKS.push([newTitle,$('#f-new-book-author').value.trim()||'作者未标注',$('#f-new-book-icon').value.trim()||'📘']);
+    DIAMONDS.unshift({who:$('#f-name').value.trim()||'匿名',img:'av-wf4',title,time:'刚刚',qt:text});
     switchView('dashboard');renderDashboard();
   };
 }
