@@ -114,6 +114,7 @@ alter table public.daily_votes enable row level security;
 
 drop policy if exists "public read members" on public.members;
 drop policy if exists "public read books" on public.books;
+drop policy if exists "teachers add books" on public.books;
 drop policy if exists "public read diamonds" on public.diamonds;
 drop policy if exists "teachers submit diamonds" on public.diamonds;
 drop policy if exists "admins manage members" on public.members;
@@ -132,6 +133,14 @@ create policy "public read members"
 
 create policy "public read books"
   on public.books for select to anon, authenticated using (true);
+
+create policy "teachers add books"
+  on public.books for insert to anon, authenticated
+  with check (
+    char_length(trim(title)) between 1 and 200
+    and char_length(trim(author)) <= 200
+    and char_length(trim(icon)) between 1 and 12
+  );
 
 create policy "public read diamonds"
   on public.diamonds for select to anon, authenticated using (true);
@@ -281,6 +290,7 @@ $$;
 
 revoke all on table public.members, public.books, public.diamonds, public.teacher_activity, public.daily_votes from anon, authenticated;
 grant select on table public.members, public.books, public.diamonds, public.teacher_activity, public.daily_votes to anon, authenticated;
+grant insert on table public.books to anon, authenticated;
 grant insert on table public.diamonds to anon, authenticated;
 grant insert, update on table public.teacher_activity to anon, authenticated;
 grant insert on table public.daily_votes to anon, authenticated;
