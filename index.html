@@ -1128,7 +1128,7 @@ function renderDashboard(){
       <div class="sec-h">🏆 成员排行榜 <span class="all" onclick="switchView('leaderboard')">本月 ›</span></div>
       <div class="podium">
         ${[lb[1],lb[0],lb[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
-          <img class="podium-whale" src="${asset(k===1?'podium1':(k===0?'podium2':'podium3'))}" alt="">
+          <img class="podium-whale" src="${asset(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">
           <div class="pn">${m.name}</div><div class="pp">${fmt(m.pts)} <small>积分</small></div></div>`;}).join('')}
       </div>
       ${lb.slice(3).map((m,i)=>`<div class="lrow"><span class="rk">${i+4}</span>${avatar(m,34)}
@@ -1274,7 +1274,7 @@ function renderLeaderboard(){
      <img src="${asset('trophy')}" style="position:absolute;right:-14px;top:6px;width:130px;opacity:.16;pointer-events:none" alt="">
      <div class="podium" style="margin-bottom:20px">
        ${[t3[1],t3[0],t3[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
-         <img class="podium-whale" src="${asset(k===1?'podium1':(k===0?'podium2':'podium3'))}" alt="">${avatar(m,0)&&''}
+         <img class="podium-whale" src="${asset(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">${avatar(m,0)&&''}
          <div class="pn">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}</div>
          <div class="lv" style="font-size:10px;color:var(--sec)">Lv.${m.lv}</div>
          <div class="pp" style="font-size:20px">${fmt(m.pts)} <small>积分</small></div></div>`;}).join('')}
