@@ -143,18 +143,12 @@
       button.textContent='提交中…';
       status.textContent='';
       if(newTitle){
-        const {error:bookError}=await sb.from('books').upsert({
+        const {error:bookError}=await sb.from('books').insert({
           title:newTitle,
           author:newAuthor||'作者未标注',
           icon:newIcon
-        },{onConflict:'title'});
-        if(bookError){
-          status.style.color='#ff9caf';
-          status.textContent=`新增书籍失败：${bookError.message}`;
-          button.disabled=false;
-          button.textContent='💎 提交 DIAMOND';
-          return;
-        }
+        });
+        if(bookError&&bookError.code!=='23505')console.warn('Book insert skipped',bookError);
       }
       const {error}=await sb.from('diamonds').insert({
         author_name:member.name,
