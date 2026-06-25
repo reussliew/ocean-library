@@ -541,7 +541,7 @@ const ASSET_BASE="assets/";
 const imgFile=(n)=>{n=n||'m1';return String(n).endsWith('.png')?n:n+'.png';};
 const asset=(n)=>ASSET_BASE+imgFile(n);
 // If an image fails from one source, retry from the other (Storage <-> local assets/)
-window.addEventListener('error',function(e){var t=e.target;if(t&&t.tagName==='IMG'&&!t.dataset.tried){t.dataset.tried='1';var f=t.src.substring(t.src.lastIndexOf('/')+1);t.src=(t.src.indexOf('/storage/')>-1?'assets/'+f:SUPA_URL+'/storage/v1/object/public/assets/'+f);}},true);
+window.addEventListener('error',function(e){var t=e.target;if(t&&t.tagName==='IMG'&&!t.dataset.tried&&!t.classList.contains('no-fallback')){t.dataset.tried='1';var f=t.src.substring(t.src.lastIndexOf('/')+1);t.src=(t.src.indexOf('/storage/')>-1?'assets/'+f:SUPA_URL+'/storage/v1/object/public/assets/'+f);}},true);
 const fmtTime=(t)=>{try{return t?new Date(t).toLocaleString('zh-CN',{month:'long',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'刚刚';}catch(e){return '刚刚';}};
 function avatar(m,size){return `<span class="av" style="width:${size}px;height:${size}px"><img src="${asset(m.img||'m1')}" alt=""></span>`;}
 
@@ -882,15 +882,31 @@ const BOOK_PDF_FILES={
   '能力陷阱':'the-competency-trap.pdf','躺平，是在浪费你的人生':'lying-flat-is-wasting-your-life.pdf',
   '博弈论':'game-theory.pdf'
 };
+const BOOK_VIDEO_LINKS={
+  '可复制的领导力：樊登的9堂商业课':'https://drive.google.com/file/d/1q0Dz0pTNyn6My6EqZH2q-D9B_2-Fhoi6/view?usp=share_link'
+};
 function cleanPdfTitle(title){
   return String(title||'').replace(/[《》]/g,'').replace(/^大会分享：/,'').replace(/^📍/,'').trim();
 }
-function bookPdfUrl(title){
+function resourceTitleKey(title){
+  return cleanPdfTitle(title).replace(/[:：]/g,'：').replace(/\s+/g,'');
+}
+function bookResource(map,title){
   const clean=cleanPdfTitle(title);
-  return BOOK_PDF_FILES[clean]?BOOK_PDF_BASE+BOOK_PDF_FILES[clean]:'';
+  if(map[clean])return map[clean];
+  const key=resourceTitleKey(clean);
+  const found=Object.keys(map).find(k=>resourceTitleKey(k)===key);
+  return found?map[found]:'';
+}
+function bookPdfUrl(title){
+  const file=bookResource(BOOK_PDF_FILES,title);
+  return file?BOOK_PDF_BASE+file:'';
+}
+function bookVideoUrl(title){
+  return bookResource(BOOK_VIDEO_LINKS,title);
 }
 let BOOKS=[
-  ['可复制的领导力：樊登的9堂商业课','樊登','🧭',bookPdfUrl('可复制的领导力：樊登的9堂商业课'),''],
+  ['可复制的领导力：樊登的9堂商业课','樊登','🧭',bookPdfUrl('可复制的领导力：樊登的9堂商业课'),'',bookVideoUrl('可复制的领导力：樊登的9堂商业课')],
   ['目标感','威廉·戴蒙','🎯'],
   ['反脆弱','纳西姆·尼古拉斯·塔勒布','🧱'],
   ['幸福的陷阱','路斯·哈里斯','🪤'],
@@ -959,7 +975,7 @@ let BOOKS=[
   ['为什么你不道歉','哈丽特·勒纳','🤝'],
   ['躺平，是在浪费你的人生','作者未标注','🌱'],
 ];
-BOOKS=BOOKS.map(book=>[book[0],book[1],book[2],bookPdfUrl(book[0])||book[3]||'',book[4]||'']);
+BOOKS=BOOKS.map(book=>[book[0],book[1],book[2],bookPdfUrl(book[0])||book[3]||'',book[4]||'',bookVideoUrl(book[0])||book[5]||'']);
 
 const now=new Date();
 function stamp(){return now.toLocaleString('zh-CN',{year:'2-digit',month:'long',day:'numeric',weekday:'long',hour:'numeric',minute:'2-digit',hour12:true});}
@@ -1128,7 +1144,7 @@ function renderDashboard(){
       <div class="sec-h">🏆 成员排行榜 <span class="all" onclick="switchView('leaderboard')">本月 ›</span></div>
       <div class="podium">
         ${[lb[1],lb[0],lb[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
-          <img class="podium-whale" src="${asset(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">
+          <img class="podium-whale no-fallback" src="assets/${imgFile(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">
           <div class="pn">${m.name}</div><div class="pp">${fmt(m.pts)} <small>积分</small></div></div>`;}).join('')}
       </div>
       ${lb.slice(3).map((m,i)=>`<div class="lrow"><span class="rk">${i+4}</span>${avatar(m,34)}
@@ -1206,6 +1222,7 @@ function shareBookDiamond(index){
 function showBook(index){
   const book=BOOKS[index];
   if(!book)return;
+  const videoUrl=bookVideoUrl(book[0])||book[5]||'';
   const matches=DIAMONDS.filter(d=>canonicalBookTitle(d.title)===book[0]);
   const readers=new Map();
   matches.forEach(d=>{
@@ -1223,6 +1240,7 @@ function showBook(index){
     <h2 class="view-h" id="book-modal-title" style="font-size:24px;padding-right:42px">${esc(book[0])}</h2>
     <div class="book-author">${esc(book[1])}</div>
     ${book[3]?`<a class="btn btn-gold" style="width:100%;justify-content:center;margin:16px 0 8px" href="${esc(book[3])}" target="_blank" rel="noopener noreferrer">📖 阅读书本</a>`:''}
+    ${videoUrl?`<a class="btn btn-gold" style="width:100%;justify-content:center;margin:16px 0 8px" href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer">🎥 观看视频</a>`:''}
     <button class="btn btn-blue" style="width:100%;justify-content:center;margin:16px 0" onclick="shareBookDiamond(${index})">💎 分享这本书的 Diamond</button>
     <div class="sec-h">正在阅读 / 已分享 Diamond 的成员</div>
     ${readerHTML||'<div class="no-readers">暂无阅读记录</div>'}`;
@@ -1274,7 +1292,7 @@ function renderLeaderboard(){
      <img src="${asset('trophy')}" style="position:absolute;right:-14px;top:6px;width:130px;opacity:.16;pointer-events:none" alt="">
      <div class="podium" style="margin-bottom:20px">
        ${[t3[1],t3[0],t3[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
-         <img class="podium-whale" src="${asset(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">${avatar(m,0)&&''}
+         <img class="podium-whale no-fallback" src="assets/${imgFile(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">${avatar(m,0)&&''}
          <div class="pn">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}</div>
          <div class="lv" style="font-size:10px;color:var(--sec)">Lv.${m.lv}</div>
          <div class="pp" style="font-size:20px">${fmt(m.pts)} <small>积分</small></div></div>`;}).join('')}
@@ -1309,7 +1327,8 @@ async function loadFromSupabase(){
     if(b&&b.data&&b.data.length){
       BOOKS=b.data.map(r=>{
         const pdfUrl=bookPdfUrl(r.title)||r.pdf_url||'';
-        return [r.title,r.author||'',r.icon||'📘',pdfUrl,r.pdf_path||''];
+        const videoUrl=bookVideoUrl(r.title)||r.video_url||'';
+        return [r.title,r.author||'',r.icon||'📘',pdfUrl,r.pdf_path||'',videoUrl];
       });
     }
     if(dia&&dia.data&&dia.data.length){
@@ -1329,12 +1348,12 @@ $('#book-close').onclick=closeBook;
 $('#book-modal').onclick=e=>{if(e.target.id==='book-modal')closeBook();};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#book-modal').hidden)closeBook();});
 async function boot(){
-  makeBubbles();renderChrome();renderAll();        // instant render with built-in data
-  await loadFromSupabase();                          // then pull live data if available
-  renderChrome();renderAll();
+  makeBubbles();
+  renderChrome();
+  if(!sb)renderAll();
 }
 boot();
 </script>
-<script src="app-supabase.js?v=20260623-1938"></script>
+<script src="app-supabase.js?v=20260624-0018"></script>
 </body>
 </html>
