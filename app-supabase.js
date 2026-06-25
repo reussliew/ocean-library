@@ -378,14 +378,13 @@
       localStorage.setItem(TEACHER_KEY,member.name);
       status.textContent='';
       closeTeacherPicker();
-      await recordTeacherActivity(member.name);
-      await refreshData();
+      recordTeacherActivity(member.name);
+      updateTeacherUI();
     };
     await refreshData();
     if(!selectedTeacher())openTeacherPicker();
     else{
-      await recordTeacherActivity(selectedTeacher());
-      await refreshData();
+      recordTeacherActivity(selectedTeacher());
     }
   }
 
