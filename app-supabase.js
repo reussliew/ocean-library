@@ -212,7 +212,7 @@
         <button class="mini-btn" id="admin-refresh">刷新数据</button>
         <button class="mini-btn" id="sync-books">同步当前书库</button>
         <button class="mini-btn" id="sync-diamonds">同步历史 Diamond</button>
-        <button class="mini-btn" id="recalculate-points">按 Diamond 重算积分</button>
+        <button class="mini-btn" id="recalculate-points">按 Diamond + 投票重算积分</button>
         <button class="mini-btn danger" id="admin-logout">退出登录</button>
       </div>
       <div class="admin-grid">

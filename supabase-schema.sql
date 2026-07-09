@@ -265,6 +265,43 @@ create trigger sync_diamond_points_trigger
 after insert or delete or update of author_name on public.diamonds
 for each row execute function public.sync_diamond_points();
 
+create or replace function public.sync_daily_vote_points()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    update public.members
+      set points = points + 1
+      where lower(name) = lower(trim(new.member_name));
+    if not found then
+      raise exception 'Unknown teacher: %', new.member_name;
+    end if;
+    return new;
+  elsif tg_op = 'DELETE' then
+    update public.members
+      set points = greatest(points - 1, 0)
+      where lower(name) = lower(trim(old.member_name));
+    return old;
+  elsif lower(trim(old.member_name)) <> lower(trim(new.member_name)) then
+    update public.members
+      set points = greatest(points - 1, 0)
+      where lower(name) = lower(trim(old.member_name));
+    update public.members
+      set points = points + 1
+      where lower(name) = lower(trim(new.member_name));
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists sync_daily_vote_points_trigger on public.daily_votes;
+create trigger sync_daily_vote_points_trigger
+after insert or delete or update of member_name on public.daily_votes
+for each row execute function public.sync_daily_vote_points();
+
 create or replace function public.recalculate_member_points()
 returns void
 language plpgsql
@@ -276,12 +313,15 @@ begin
     raise exception 'Admin access required';
   end if;
   update public.members m
-  set points = counts.total,
-      diamonds = counts.total
+  set points = counts.diamond_total + counts.vote_total,
+      diamonds = counts.diamond_total
   from (
-    select m2.id, count(d.id)::int as total
+    select m2.id,
+           count(distinct d.id)::int as diamond_total,
+           count(distinct v.vote_date)::int as vote_total
     from public.members m2
     left join public.diamonds d on lower(d.author_name) = lower(m2.name)
+    left join public.daily_votes v on lower(v.member_name) = lower(m2.name)
     group by m2.id
   ) counts
   where m.id = counts.id;
@@ -302,6 +342,7 @@ grant usage on schema private to authenticated;
 grant execute on function private.is_ocean_admin() to authenticated;
 grant execute on function public.recalculate_member_points() to authenticated;
 revoke execute on function public.sync_diamond_points() from public, anon, authenticated;
+revoke execute on function public.sync_daily_vote_points() from public, anon, authenticated;
 revoke execute on function public.recalculate_member_points() from public, anon;
 
 insert into public.members (name, level, role, avatar)
@@ -363,12 +404,15 @@ where trim(d.title) <> ''
 on conflict do nothing;
 
 update public.members m
-set points = counts.total,
-    diamonds = counts.total
+set points = counts.diamond_total + counts.vote_total,
+    diamonds = counts.diamond_total
 from (
-  select m2.id, count(d.id)::int as total
+  select m2.id,
+         count(distinct d.id)::int as diamond_total,
+         count(distinct v.vote_date)::int as vote_total
   from public.members m2
   left join public.diamonds d on lower(d.author_name) = lower(m2.name)
+  left join public.daily_votes v on lower(v.member_name) = lower(m2.name)
   group by m2.id
 ) counts
 where m.id = counts.id;
