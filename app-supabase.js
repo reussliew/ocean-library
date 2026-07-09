@@ -75,9 +75,11 @@
     if(!member){openTeacherPicker();return;}
     const profile=document.querySelector('.profile');
     if(profile){
+      const rank=typeof memberRank==='function'?memberRank(member):{lv:member.lv||0,title:member.role||''};
       profile.querySelector('.pn').textContent=member.name;
-      profile.querySelector('.pl').textContent=`${member.pts||0} 积分`;
+      profile.querySelector('.pl').textContent=`Lv.${rank.lv} · ${rank.title} · ${member.pts||0}分`;
       profile.querySelector('#me-av').innerHTML=`<img src="${asset(member.img||'av-wf1')}" alt="">`;
+      profile.classList.remove('profile-loading');
       profile.onclick=openTeacherPicker;
       profile.title='更换老师';
     }
@@ -216,10 +218,11 @@
         <button class="mini-btn danger" id="admin-logout">退出登录</button>
       </div>
       <div class="admin-grid">
-        <div class="glass" style="padding:18px"><div class="sec-h">成员积分与角色</div>
+        <div class="glass" style="padding:18px"><div class="sec-h">成员积分与备注</div>
+          <div class="sub-h" style="margin-bottom:10px">前台等级与称号会按总积分自动显示；Reuss 和 Penny 固定为馆长。</div>
           <div class="admin-list">${(members||[]).map(m=>`<div class="admin-row" data-member="${m.id}">
             <strong>${esc(m.name)}</strong><input class="adm-points" type="number" min="0" value="${m.points||0}">
-            <input class="adm-role" value="${esc(m.role||'')}" placeholder="角色"><button class="mini-btn save-member">保存</button>
+            <input class="adm-role" value="${esc(m.role||'')}" placeholder="备注"><button class="mini-btn save-member">保存</button>
           </div>`).join('')}</div>
         </div>
         <div class="glass" style="padding:18px"><div class="sec-h">书库</div>

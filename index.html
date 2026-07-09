@@ -72,12 +72,14 @@
   .navsearch{display:flex;align-items:center;gap:8px;background:rgba(8,20,44,.8);border:1px solid var(--line);
     border-radius:12px;padding:9px 14px;color:var(--muted);font-size:13px;min-width:210px}
   .navsearch input{background:transparent;border:none;outline:none;color:var(--text);font:inherit;font-size:13px;width:100%}
-  .profile{display:flex;align-items:center;gap:9px;background:rgba(8,20,44,.8);border:1px solid var(--line);
-    border-radius:14px;padding:5px 12px 5px 5px;cursor:pointer}
+  .profile{display:flex;align-items:center;gap:8px;background:rgba(8,20,44,.8);border:1px solid var(--line);
+    border-radius:14px;padding:5px 10px 5px 5px;cursor:pointer;height:56px;min-width:176px;max-width:190px;overflow:hidden}
+  .profile.profile-loading{visibility:hidden}
   .profile .pa{width:38px;height:38px;border-radius:11px;overflow:hidden;flex:0 0 auto;background:var(--g-cool);display:flex;align-items:center;justify-content:center}
-  .profile .pn{font-size:13px;font-weight:800;line-height:1.1}
-  .profile .pl{font-size:10px;color:var(--gold);font-weight:800;letter-spacing:.5px}
-  .profile .car{color:var(--muted);font-size:11px}
+  .profile .profile-info{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px}
+  .profile .pn{display:block;font-size:13px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .profile .pl{display:block;font-size:10px;color:var(--gold);font-weight:800;letter-spacing:0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .profile .car{color:var(--muted);font-size:11px;flex:0 0 auto}
 
   main{padding:26px 0 40px}
   .grid{display:grid;gap:18px}
@@ -432,9 +434,9 @@
   <div class="navlinks" id="navlinks"></div>
   <div class="nav-right">
     <div class="navsearch">🔍<input placeholder="搜索书籍 / Diamond"></div>
-    <div class="profile">
+    <div class="profile profile-loading">
       <span class="pa" id="me-av"></span>
-      <span><span class="pn">Wenly</span><br><span class="pl">Lv.28</span></span>
+      <span class="profile-info"><span class="pn"></span><span class="pl"></span></span>
       <span class="car">▾</span>
     </div>
   </div>
@@ -985,12 +987,31 @@ const $=s=>document.querySelector(s);
 const fmt=n=>n.toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const medals=['🥇','🥈','🥉'];
+const HOST_NAMES=new Set(['reuss','penny']);
+const LEVEL_TITLES=[
+  {min:0,max:9,lv:0,title:'青铜启航',desc:'刚开始学习，开始出发'},
+  {min:10,max:19,lv:1,title:'白银拾贝',desc:'开始收集知识和领悟'},
+  {min:20,max:29,lv:2,title:'黄金寻光',desc:'开始找到学习方向'},
+  {min:30,max:39,lv:3,title:'铂金潜修',desc:'愿意深入学习'},
+  {min:40,max:49,lv:4,title:'钻石破浪',desc:'学习开始稳定'},
+  {min:50,max:59,lv:5,title:'星耀航海',desc:'能整理和分享知识'},
+  {min:60,max:69,lv:6,title:'荣耀探索者',desc:'有更深层的思考'},
+  {min:70,max:79,lv:7,title:'王者领航员',desc:'能把领悟带进教学'},
+  {min:80,max:89,lv:8,title:'传奇灯塔师',desc:'分享内容开始影响团队'},
+  {min:90,max:Infinity,lv:9,title:'海洋荣耀王者',desc:'成为团队学习榜样'}
+];
+function memberRank(m){
+  const name=String(m?.name||'').trim().toLowerCase();
+  if(HOST_NAMES.has(name))return {lv:10,title:'巅峰馆长',desc:'海洋图书馆负责人',isHost:true};
+  const pts=Math.max(0,Number(m?.pts||0));
+  return LEVEL_TITLES.find(r=>pts>=r.min&&pts<=r.max)||LEVEL_TITLES[0];
+}
+function memberBadge(m){return `<span class="role">${esc(memberRank(m).title)}</span>`;}
 
 /* =================== NAV =================== */
 const VIEWS=[['dashboard','Dashboard'],['diamond','+ Diamond'],['books','书库'],['members','成员'],['leaderboard','排行榜']];
 function renderChrome(){
   $('#nav-logo').innerHTML=logoLockup(46);
-  $('#me-av').innerHTML=`<img src="${asset('av-wf1')}" alt="">`;
   $('#foot-logo').innerHTML=logoLockup(40);
   $('#navlinks').innerHTML=VIEWS.map((v,i)=>`<button data-v="${v[0]}" class="${i===0?'active':''}">${v[1]}</button>`).join('');
   $('#navlinks').querySelectorAll('button').forEach(b=>b.onclick=()=>switchView(b.dataset.v));
@@ -1094,7 +1115,7 @@ function renderDashboard(){
       <div class="sec-h">📈 本周阅读进度 <span class="all" onclick="switchView('leaderboard')">查看全部 ›</span></div>
       ${prog.map((m,i)=>`<div class="prow">
         ${avatar(m,42)}
-        <div class="info"><div class="nm">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}</div><div class="lv">总积分 ${m.pts}</div></div>
+        <div class="info"><div class="nm">${m.name} ${memberBadge(m)}</div><div class="lv">Lv.${memberRank(m).lv} · 总积分 ${m.pts}</div></div>
         <div class="cnt">本周分享 ${m.weekly} 篇</div>
         <div class="pbar"><i style="width:${m.weekly/maxWeekly*100}%"></i></div>
         <div class="pct">${m.weekly} 篇</div>
@@ -1138,7 +1159,7 @@ function renderDashboard(){
     <div class="glass" style="padding:20px">
       <div class="sec-h">🎉 新成员欢迎 <span class="all" onclick="switchView('members')">查看全部 ›</span></div>
       <div class="nm-grid">${news.map(m=>`<div class="nm-card">${avatar(m,56)}
-        <div class="nm">${m.name}</div><div class="lv">Lv.${m.lv}</div><div class="wl">欢迎！</div></div>`).join('')}</div>
+        <div class="nm">${m.name}</div><div class="lv">Lv.${memberRank(m).lv} · ${esc(memberRank(m).title)}</div><div class="wl">欢迎！</div></div>`).join('')}</div>
     </div>
     <div class="glass" style="padding:20px">
       <div class="sec-h">🏆 成员排行榜 <span class="all" onclick="switchView('leaderboard')">本月 ›</span></div>
@@ -1272,8 +1293,8 @@ function renderMembers(){
    <div class="grid3" id="mem-grid"></div>`;
   const grid=$('#mem-grid');
   const maxWeekly=Math.max(...MEMBERS.map(m=>weeklyDiamondCount(m.name)),1);
-  const draw=list=>grid.innerHTML=list.map(m=>{const weekly=weeklyDiamondCount(m.name);return `<div class="glass mcard">
-     <div class="top">${avatar(m,48)}<div><div class="nm">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}${m.isNew?'<span class="role" style="color:var(--teal);border-color:rgba(25,227,210,.4)">新</span>':''}</div><div class="lv">Lv.${m.lv}</div></div>
+  const draw=list=>grid.innerHTML=list.map(m=>{const weekly=weeklyDiamondCount(m.name),rank=memberRank(m);return `<div class="glass mcard">
+     <div class="top">${avatar(m,48)}<div><div class="nm">${m.name} ${memberBadge(m)}${m.isNew?'<span class="role" style="color:var(--teal);border-color:rgba(25,227,210,.4)">新</span>':''}</div><div class="lv">Lv.${rank.lv} · ${esc(rank.desc)}</div></div>
        <div class="pp">${fmt(m.pts)}<small>积分</small></div></div>
      <div class="pbar" style="max-width:none"><i style="width:${weekly/maxWeekly*100}%"></i></div>
      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>本周 ${weekly} 篇</span><span>${m.books} 本书 · ${m.diamonds} 💎</span></div>
@@ -1287,18 +1308,18 @@ function renderLeaderboard(){
   const r=[...MEMBERS];const t3=r.slice(0,3),rest=r.slice(3);const max=r[0].pts;
   $('#view-leaderboard').innerHTML=`
    <h2 class="view-h">🏆 排行榜</h2>
-   <div class="sub-h">按本月总积分排名 · 每记录一条 Diamond 即可获得积分。</div>
+   <div class="sub-h">按总积分排名 · 记录 Diamond 与每日反思投票都会获得积分。</div>
    <div class="glass" style="padding:24px;position:relative;overflow:hidden">
      <img src="${asset('trophy')}" style="position:absolute;right:-14px;top:6px;width:130px;opacity:.16;pointer-events:none" alt="">
      <div class="podium" style="margin-bottom:20px">
        ${[t3[1],t3[0],t3[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
          <img class="podium-whale no-fallback" src="assets/${imgFile(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">${avatar(m,0)&&''}
-         <div class="pn">${m.name} ${m.role?`<span class="role">${m.role}</span>`:''}</div>
-         <div class="lv" style="font-size:10px;color:var(--sec)">Lv.${m.lv}</div>
+         <div class="pn">${m.name} ${memberBadge(m)}</div>
+         <div class="lv" style="font-size:10px;color:var(--sec)">Lv.${memberRank(m).lv}</div>
          <div class="pp" style="font-size:20px">${fmt(m.pts)} <small>积分</small></div></div>`;}).join('')}
      </div>
      ${rest.map((m,i)=>`<div class="lrow"><span class="rk">${i+4}</span>${avatar(m,38)}
-       <span class="nm">${m.name} <span class="lv" style="color:var(--muted);font-weight:600">Lv.${m.lv}</span></span>
+      <span class="nm">${m.name} <span class="lv" style="color:var(--muted);font-weight:600">Lv.${memberRank(m).lv} · ${esc(memberRank(m).title)}</span></span>
        <div class="pbar" style="max-width:240px"><i style="width:${m.pts/max*100}%"></i></div>
        <span class="pp">${fmt(m.pts)} ⭐</span></div>`).join('')}
    </div>`;
