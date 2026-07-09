@@ -268,6 +268,8 @@
     border-radius:11px;padding:12px 14px;color:var(--text);font:inherit;font-size:14px}
   .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal)}
   .field textarea{min-height:130px;resize:vertical}
+  .diamond-stack{display:grid;gap:10px}
+  .diamond-stack .diamond-input{min-height:74px}
   .auto{font-size:12px;color:var(--muted);margin:-6px 0 14px}
   .search{width:100%;background:rgba(8,20,44,.7);border:1px solid var(--line);border-radius:13px;
     padding:13px 16px;color:var(--text);font:inherit;font-size:14px;margin-bottom:20px}
@@ -1200,7 +1202,12 @@ function renderDiamond(){
        <div class="field"><label>作者（可空）</label><input id="f-new-book-author" placeholder="不知道作者可以先留空"></div>
        <div class="field"><label>图标</label><input id="f-new-book-icon" value="📘" maxlength="4"></div>
      </div>
-     <div class="field"><label>你的 Diamond</label><textarea id="f-text" placeholder="分享你今天阅读中的关键感悟、金句或突破……"></textarea></div>
+     <div class="field">
+       <label>你的 Diamond <span style="color:var(--muted);font-weight:600">填几条就算几分，最多 10 条</span></label>
+       <div class="diamond-stack">
+         ${Array.from({length:10},(_,i)=>`<textarea class="diamond-input" data-diamond-no="${i+1}" placeholder="Diamond ${i+1}：分享关键感悟、金句或突破……"></textarea>`).join('')}
+       </div>
+     </div>
      <button class="btn btn-blue" style="width:100%;justify-content:center" id="f-submit">💎 提交 DIAMOND</button>
    </div>
    <h2 class="view-h" style="margin-top:30px;font-size:22px">成员 Diamond 记录</h2>
