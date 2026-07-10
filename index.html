@@ -614,6 +614,7 @@ function dailyPoll(){
 let POLL=dailyPoll();
 
 const LATEST_UPDATES=[
+  {date:'2026-07-10',icon:'🔥',title:'热门书籍改为个人成长榜',desc:'Dashboard 的热门书籍已改成微信读书「个人成长」分类前五名。'},
   {date:'2026-07-10',icon:'🆕',title:'最新 Update 面板',desc:'Dashboard 的「新成员欢迎」改成最新更新区，只显示最近五个功能更新。'},
   {date:'2026-07-09',icon:'💎',title:'Diamond 1-10 多条提交',desc:'老师可以一次填写 Diamond 1 到 Diamond 10，系统会按实际填写数量计算积分。'},
   {date:'2026-07-09',icon:'🗳️',title:'每日反思自动加分',desc:'每天完成反思投票的老师，会自动获得 1 分。'},
@@ -876,11 +877,11 @@ const BOOKLISTS=[
 const CATS=['cat1','cat2','cat3','cat4','cat5'];
 
 const HOT=[
-  {t:'三体全集（全三册）',a:'刘慈欣',ic:'🚀',cv:'linear-gradient(160deg,#6e5cf5,#241a66)'},
-  {t:'长安的荔枝（同名影视原著）',a:'马伯庸',ic:'📕',cv:'linear-gradient(160deg,#f2a44e,#7c3a16)'},
-  {t:'明朝那些事儿（全集）',a:'当年明月',ic:'📜',cv:'linear-gradient(160deg,#2e7bf0,#0c1c50)'},
-  {t:'活着',a:'余华',ic:'🌾',cv:'linear-gradient(160deg,#34d6a6,#0c4a3a)'},
-  {t:'平凡的世界（全三册）',a:'路遥',ic:'🌍',cv:'linear-gradient(160deg,#19c0d8,#0c4a66)'},
+  {t:'穷查理宝典：查理·芒格智慧箴言录（全新增订本）',a:'彼得·考夫曼',ic:'💡',cv:'linear-gradient(160deg,#6e5cf5,#241a66)'},
+  {t:'当下的力量（白金版）',a:'埃克哈特·托利',ic:'🌿',cv:'linear-gradient(160deg,#34d6a6,#0c4a3a)'},
+  {t:'四十岁才明白的事，恨不得三十岁就知道',a:'张峻滔',ic:'🧭',cv:'linear-gradient(160deg,#2e7bf0,#0c1c50)'},
+  {t:'人性的弱点（果麦经典）',a:'戴尔·卡耐基',ic:'🤝',cv:'linear-gradient(160deg,#f2a44e,#7c3a16)'},
+  {t:'思考，快与慢（第二版）',a:'丹尼尔·卡尼曼',ic:'🧠',cv:'linear-gradient(160deg,#19c0d8,#0c4a66)'},
 ];
 
 const BOOK_PDF_BASE='https://ocean-library-zeta.vercel.app/';
@@ -1156,7 +1157,7 @@ function renderDashboard(){
         <div><div class="t">${esc(b.title)}</div><div class="c">${b.readers.size} 位老师 · ${b.diamonds} 篇 Diamond</div></div></div>`;}).join('')||'<div class="sub-h">暂无阅读记录</div>'}
     </div>
     <div class="glass" style="padding:20px">
-      <div class="sec-h">🔥 热门书籍 <a class="all" href="https://weread.qq.com/web/category/all" target="_blank" rel="noopener noreferrer">查看微信读书总榜 ↗</a></div>
+      <div class="sec-h">🔥 热门书籍 <a class="all" href="https://weread.qq.com/web/category/1000000" target="_blank" rel="noopener noreferrer">查看个人成长榜 ↗</a></div>
       ${HOT.map((h,i)=>`<div class="hot">
         <span class="rk" style="background:${i<3?'var(--g-gold)':'rgba(96,158,255,.2)'};${i>=3?'color:#9DB6D8':''}">${i+1}</span>
         <span class="cv" style="background:${h.cv}">${h.ic}</span>
