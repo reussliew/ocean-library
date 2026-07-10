@@ -615,6 +615,7 @@ function dailyPoll(){
 let POLL=dailyPoll();
 
 const LATEST_UPDATES=[
+  {date:'2026-07-10',icon:'📚',title:'推荐书单与热门书籍显示 6 本',desc:'Dashboard 的推荐书单和热门书籍都改成显示 6 本，方便老师看到更多选择。'},
   {date:'2026-07-10',icon:'🛠️',title:'加入海洋科技部横幅',desc:'最新 Update 面板下方加入海洋科技部图片，让 Dashboard 空位更完整。'},
   {date:'2026-07-10',icon:'🏆',title:'阅读总排行榜显示前 10 名',desc:'Dashboard 的成员排行榜改成阅读总排行榜，并列出总积分最高的前 10 位老师。'},
   {date:'2026-07-10',icon:'📈',title:'阅读进度改为本月统计',desc:'Dashboard 阅读进度改成按月份计算，查看全部可看到全员本月分享进度。'},
@@ -886,6 +887,7 @@ const HOT=[
   {t:'四十岁才明白的事，恨不得三十岁就知道',a:'张峻滔',ic:'🧭',cv:'linear-gradient(160deg,#2e7bf0,#0c1c50)'},
   {t:'人性的弱点（果麦经典）',a:'戴尔·卡耐基',ic:'🤝',cv:'linear-gradient(160deg,#f2a44e,#7c3a16)'},
   {t:'思考，快与慢（第二版）',a:'丹尼尔·卡尼曼',ic:'🧠',cv:'linear-gradient(160deg,#19c0d8,#0c4a66)'},
+  {t:'高效能人士的七个习惯（30周年纪念版）（全新增订版）',a:'史蒂芬·柯维',ic:'⭐',cv:'linear-gradient(160deg,#8a7bff,#1a2f7a)'},
 ];
 
 const BOOK_PDF_BASE='https://ocean-library-zeta.vercel.app/';
@@ -1095,7 +1097,7 @@ function renderDashboard(){
     item.readers.add(d.who);
     item.diamonds++;
   });
-  const recommendedBooks=[...recommendationMap.values()].sort((a,b)=>b.readers.size-a.readers.size||b.diamonds-a.diamonds).slice(0,4);
+  const recommendedBooks=[...recommendationMap.values()].sort((a,b)=>b.readers.size-a.readers.size||b.diamonds-a.diamonds).slice(0,6);
   $('#view-dashboard').innerHTML=`
   <!-- HERO -->
   <div class="hero">
@@ -1154,8 +1156,8 @@ function renderDashboard(){
     </div>
     <div class="glass" style="padding:20px">
       <div class="sec-h">📑 推荐书单 <span class="all" onclick="switchView('books')">最多老师阅读 ›</span></div>
-      ${recommendedBooks.map((b,i)=>{const bookIndex=BOOKS.findIndex(book=>book[0]===b.title);return `<div class="bl-row" style="cursor:pointer" onclick="showBook(${bookIndex})">
-        <span class="bl-thumb" style="background:${['#2EA0F0','#8A7BFF','#19C0D8','#F2A44E'][i]}26;color:${['#2EA0F0','#8A7BFF','#19C0D8','#F2A44E'][i]}">${i+1}</span>
+      ${recommendedBooks.map((b,i)=>{const bookIndex=BOOKS.findIndex(book=>book[0]===b.title);const colors=['#2EA0F0','#8A7BFF','#19C0D8','#F2A44E','#34D6A6','#FFC75A'];return `<div class="bl-row" style="cursor:pointer" onclick="showBook(${bookIndex})">
+        <span class="bl-thumb" style="background:${colors[i%colors.length]}26;color:${colors[i%colors.length]}">${i+1}</span>
         <div><div class="t">${esc(b.title)}</div><div class="c">${b.readers.size} 位老师 · ${b.diamonds} 篇 Diamond</div></div></div>`;}).join('')||'<div class="sub-h">暂无阅读记录</div>'}
     </div>
     <div class="glass" style="padding:20px">
