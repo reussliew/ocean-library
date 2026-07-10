@@ -614,6 +614,8 @@ function dailyPoll(){
 let POLL=dailyPoll();
 
 const LATEST_UPDATES=[
+  {date:'2026-07-10',icon:'🏆',title:'阅读总排行榜显示前 10 名',desc:'Dashboard 的成员排行榜改成阅读总排行榜，并列出总积分最高的前 10 位老师。'},
+  {date:'2026-07-10',icon:'📈',title:'阅读进度改为本月统计',desc:'Dashboard 阅读进度改成按月份计算，查看全部可看到全员本月分享进度。'},
   {date:'2026-07-10',icon:'🔥',title:'热门书籍改为个人成长榜',desc:'Dashboard 的热门书籍已改成微信读书「个人成长」分类前五名。'},
   {date:'2026-07-10',icon:'🆕',title:'最新 Update 面板',desc:'Dashboard 的「新成员欢迎」改成最新更新区，只显示最近五个功能更新。'},
   {date:'2026-07-09',icon:'💎',title:'Diamond 1-10 多条提交',desc:'老师可以一次填写 Diamond 1 到 Diamond 10，系统会按实际填写数量计算积分。'},
@@ -1067,23 +1069,21 @@ function ring(pct){const r=26,c=2*Math.PI*r,off=c*(1-pct/100);
       stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 32 32)"/>
       <text x="32" y="30" text-anchor="middle" font-size="9" fill="#F2C44E">⭐</text></svg>`;}
 
-function currentWeekStart(){
-  const now=new Date(),start=new Date(now);
-  start.setHours(0,0,0,0);
-  start.setDate(now.getDate()-((now.getDay()+6)%7));
-  return start;
+function currentMonthStart(){
+  const now=new Date();
+  return new Date(now.getFullYear(),now.getMonth(),1);
 }
-function weeklyDiamondCount(name){
-  const start=currentWeekStart();
+function monthlyDiamondCount(name){
+  const start=currentMonthStart();
   return DIAMONDS.filter(d=>d.who===name&&d.createdAt&&new Date(d.createdAt)>=start).length;
 }
 
 function renderDashboard(){
-  const prog=MEMBERS.map(m=>({...m,weekly:weeklyDiamondCount(m.name)})).sort((a,b)=>b.weekly-a.weekly).slice(0,4);
-  const maxWeekly=Math.max(...prog.map(m=>m.weekly),1);
-  const lb=[...MEMBERS].slice(0,5);
-  const weekStart=currentWeekStart();
-  const weeklyDiamonds=DIAMONDS.filter(d=>d.createdAt&&new Date(d.createdAt)>=weekStart);
+  const prog=MEMBERS.map(m=>({...m,monthly:monthlyDiamondCount(m.name)})).sort((a,b)=>b.monthly-a.monthly||b.pts-a.pts).slice(0,4);
+  const maxMonthly=Math.max(...prog.map(m=>m.monthly),1);
+  const lb=[...MEMBERS].sort((a,b)=>b.pts-a.pts).slice(0,10);
+  const monthStart=currentMonthStart();
+  const monthlyDiamonds=DIAMONDS.filter(d=>d.createdAt&&new Date(d.createdAt)>=monthStart);
   const activeNames=ACTIVE_MEMBERS.map(a=>a.member_name||a).filter(Boolean);
   const recommendationMap=new Map();
   DIAMONDS.forEach(d=>{
@@ -1122,20 +1122,20 @@ function renderDashboard(){
     <div class="glass stat"><div class="lbl">Diamond 总数</div><div class="num">${fmt(DIAMONDS.length)}</div><div class="delta">每篇分享计 1 个</div><span class="em" style="width:78px;height:78px"><img src="${asset('pose4')}" style="width:100%;height:100%;object-fit:contain"></span></div>
     <div class="glass stat" title="${esc(activeNames.join('、'))}"><div class="lbl">活跃成员</div><div class="num">${activeNames.length}</div><div class="delta">${activeNames.length?esc(activeNames.slice(0,3).join('、'))+(activeNames.length>3?'…':''):'尚未有人登入'}</div><span class="em" style="width:80px;height:80px"><img src="${asset('pose1')}" style="width:100%;height:100%;object-fit:contain"></span></div>
     <div class="glass stat"><div class="lbl">馆藏书籍</div><div class="num">${fmt(BOOKS.length)}</div><div class="delta">目前书库收录</div><span class="em" style="width:80px;height:80px"><img src="${asset('pose2')}" style="width:100%;height:100%;object-fit:contain"></span></div>
-    <div class="glass stat"><div class="lbl">本周 Diamond</div><div class="num">${fmt(weeklyDiamonds.length)}</div><div class="delta" style="color:var(--gold)">鼓励多阅读、多分享</div>${ring(Math.min(weeklyDiamonds.length*10,100))}</div>
+    <div class="glass stat"><div class="lbl">本月 Diamond</div><div class="num">${fmt(monthlyDiamonds.length)}</div><div class="delta" style="color:var(--gold)">每月自动重新统计</div>${ring(Math.min(monthlyDiamonds.length*5,100))}</div>
   </div>
 
   <!-- POLL + READING PROGRESS -->
   <div class="grid two" style="grid-template-columns:1fr 1.25fr;margin-top:20px">
     <div class="glass" style="padding:20px" id="dash-poll">${pollHTML()}</div>
     <div class="glass" style="padding:20px">
-      <div class="sec-h">📈 本周阅读进度 <span class="all" onclick="switchView('leaderboard')">查看全部 ›</span></div>
+      <div class="sec-h">📈 本月阅读进度 <span class="all" onclick="switchView('leaderboard')">查看全部 ›</span></div>
       ${prog.map((m,i)=>`<div class="prow">
         ${avatar(m,42)}
         <div class="info"><div class="nm">${m.name} ${memberBadge(m)}</div><div class="lv">Lv.${memberRank(m).lv} · 总积分 ${m.pts}</div></div>
-        <div class="cnt">本周分享 ${m.weekly} 篇</div>
-        <div class="pbar"><i style="width:${m.weekly/maxWeekly*100}%"></i></div>
-        <div class="pct">${m.weekly} 篇</div>
+        <div class="cnt">本月分享 ${m.monthly} 篇</div>
+        <div class="pbar"><i style="width:${m.monthly/maxMonthly*100}%"></i></div>
+        <div class="pct">${m.monthly} 篇</div>
         <div class="mdl">${i<3?medals[i]:''}</div>
       </div>`).join('')}
     </div>
@@ -1182,7 +1182,7 @@ function renderDashboard(){
       </div>`).join('')}</div>
     </div>
     <div class="glass" style="padding:20px">
-      <div class="sec-h">🏆 成员排行榜 <span class="all" onclick="switchView('leaderboard')">本月 ›</span></div>
+      <div class="sec-h">🏆 阅读总排行榜</div>
       <div class="podium">
         ${[lb[1],lb[0],lb[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
           <img class="podium-whale no-fallback" src="assets/${imgFile(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">
@@ -1317,12 +1317,12 @@ function renderMembers(){
    <input class="search" id="mem-search" placeholder="搜索成员……">
    <div class="grid3" id="mem-grid"></div>`;
   const grid=$('#mem-grid');
-  const maxWeekly=Math.max(...MEMBERS.map(m=>weeklyDiamondCount(m.name)),1);
-  const draw=list=>grid.innerHTML=list.map(m=>{const weekly=weeklyDiamondCount(m.name),rank=memberRank(m);return `<div class="glass mcard">
+  const maxMonthly=Math.max(...MEMBERS.map(m=>monthlyDiamondCount(m.name)),1);
+  const draw=list=>grid.innerHTML=list.map(m=>{const monthly=monthlyDiamondCount(m.name),rank=memberRank(m);return `<div class="glass mcard">
      <div class="top">${avatar(m,48)}<div><div class="nm">${m.name} ${memberBadge(m)}${m.isNew?'<span class="role" style="color:var(--teal);border-color:rgba(25,227,210,.4)">新</span>':''}</div><div class="lv">Lv.${rank.lv} · ${esc(rank.desc)}</div></div>
        <div class="pp">${fmt(m.pts)}<small>积分</small></div></div>
-     <div class="pbar" style="max-width:none"><i style="width:${weekly/maxWeekly*100}%"></i></div>
-     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>本周 ${weekly} 篇</span><span>${m.books} 本书 · ${m.diamonds} 💎</span></div>
+     <div class="pbar" style="max-width:none"><i style="width:${monthly/maxMonthly*100}%"></i></div>
+     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>本月 ${monthly} 篇</span><span>${m.books} 本书 · ${m.diamonds} 💎</span></div>
    </div>`;}).join('')||`<div class="sub-h">没有符合条件的成员。</div>`;
   draw(MEMBERS);
   $('#mem-search').oninput=e=>{const q=e.target.value.toLowerCase();draw(MEMBERS.filter(m=>m.name.toLowerCase().includes(q)));};
@@ -1330,23 +1330,21 @@ function renderMembers(){
 
 /* =================== LEADERBOARD =================== */
 function renderLeaderboard(){
-  const r=[...MEMBERS];const t3=r.slice(0,3),rest=r.slice(3);const max=r[0].pts;
+  const monthlyMembers=MEMBERS.map(m=>({...m,monthly:monthlyDiamondCount(m.name)})).sort((a,b)=>b.monthly-a.monthly||b.pts-a.pts);
+  const maxMonthly=Math.max(...monthlyMembers.map(m=>m.monthly),1);
   $('#view-leaderboard').innerHTML=`
-   <h2 class="view-h">🏆 排行榜</h2>
-   <div class="sub-h">按总积分排名 · 记录 Diamond 与每日反思投票都会获得积分。</div>
+   <h2 class="view-h">📈 本月阅读进度</h2>
+   <div class="sub-h">以本月提交的 Diamond 数量统计；新的月份会自动从 0 重新开始。</div>
    <div class="glass" style="padding:24px;position:relative;overflow:hidden">
      <img src="${asset('trophy')}" style="position:absolute;right:-14px;top:6px;width:130px;opacity:.16;pointer-events:none" alt="">
-     <div class="podium" style="margin-bottom:20px">
-       ${[t3[1],t3[0],t3[2]].map((m,k)=>{const rank=k===1?0:(k===0?1:2);return `<div class="pod ${rank===0?'p1':''}">
-         <img class="podium-whale no-fallback" src="assets/${imgFile(k===1?'rank-gold-whale':(k===0?'rank-silver-whale':'rank-bronze-whale'))}" alt="">${avatar(m,0)&&''}
-         <div class="pn">${m.name} ${memberBadge(m)}</div>
-         <div class="lv" style="font-size:10px;color:var(--sec)">Lv.${memberRank(m).lv}</div>
-         <div class="pp" style="font-size:20px">${fmt(m.pts)} <small>积分</small></div></div>`;}).join('')}
-     </div>
-     ${rest.map((m,i)=>`<div class="lrow"><span class="rk">${i+4}</span>${avatar(m,38)}
-      <span class="nm">${m.name} <span class="lv" style="color:var(--muted);font-weight:600">Lv.${memberRank(m).lv} · ${esc(memberRank(m).title)}</span></span>
-       <div class="pbar" style="max-width:240px"><i style="width:${m.pts/max*100}%"></i></div>
-       <span class="pp">${fmt(m.pts)} ⭐</span></div>`).join('')}
+     ${monthlyMembers.map((m,i)=>`<div class="prow">
+       ${avatar(m,42)}
+       <div class="info"><div class="nm">${m.name} ${memberBadge(m)}</div><div class="lv">Lv.${memberRank(m).lv} · 总积分 ${fmt(m.pts)}</div></div>
+       <div class="cnt">本月分享 ${m.monthly} 篇</div>
+       <div class="pbar"><i style="width:${m.monthly/maxMonthly*100}%"></i></div>
+       <div class="pct">${m.monthly} 篇</div>
+       <div class="mdl">${i<3?medals[i]:''}</div>
+     </div>`).join('')}
    </div>`;
 }
 
