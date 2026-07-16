@@ -615,6 +615,7 @@ function dailyPoll(){
 let POLL=dailyPoll();
 
 const LATEST_UPDATES=[
+  {date:'2026-07-16',icon:'🎬',title:'《拆掉思维里的墙》加入阅读与视频',desc:'书库中这本书已加入 PDF 阅读按钮和 Google Drive 学习视频按钮。'},
   {date:'2026-07-10',icon:'📚',title:'推荐书单与热门书籍显示 6 本',desc:'Dashboard 的推荐书单和热门书籍都改成显示 6 本，方便老师看到更多选择。'},
   {date:'2026-07-10',icon:'🛠️',title:'加入海洋科技部横幅',desc:'最新 Update 面板下方加入海洋科技部图片，让 Dashboard 空位更完整。'},
   {date:'2026-07-10',icon:'🏆',title:'阅读总排行榜显示前 10 名',desc:'Dashboard 的成员排行榜改成阅读总排行榜，并列出总积分最高的前 10 位老师。'},
@@ -905,11 +906,13 @@ const BOOK_PDF_FILES={
   '学会提问':'asking-the-right-questions.pdf','销售就是玩转情商':'sales-emotional-intelligence.pdf',
   '时间管理':'time-management.pdf','人性的阻力':'human-resistance.pdf','停补':'ting-bu.pdf',
   '能力陷阱':'the-competency-trap.pdf','躺平，是在浪费你的人生':'lying-flat-is-wasting-your-life.pdf',
-  '博弈论':'game-theory.pdf','非暴力沟通':'nonviolent-communication.pdf'
+  '博弈论':'game-theory.pdf','非暴力沟通':'nonviolent-communication.pdf',
+  '拆掉思维里的墙':'break-down-the-wall-in-your-mind.pdf'
 };
 const BOOK_VIDEO_LINKS={
   '可复制的领导力：樊登的9堂商业课':'https://drive.google.com/file/d/1q0Dz0pTNyn6My6EqZH2q-D9B_2-Fhoi6/view?usp=share_link',
-  '非暴力沟通':'https://drive.google.com/file/d/1EobAkp0pT2rdcZxEarxoDRoWcGvIokW7/view?usp=share_link'
+  '非暴力沟通':'https://drive.google.com/file/d/1EobAkp0pT2rdcZxEarxoDRoWcGvIokW7/view?usp=share_link',
+  '拆掉思维里的墙':'https://drive.google.com/file/d/1-9uPx6S_Tw6rVWnmb1dphuyR-4RuK_tV/view?usp=share_link'
 };
 function cleanPdfTitle(title){
   return String(title||'').replace(/[《》]/g,'').replace(/^大会分享：/,'').replace(/^📍/,'').trim();
